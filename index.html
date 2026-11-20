@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Databricks Genie Ontology</title>
+<meta name="description" content="Databricks Genie Ontology의 개념, 동작 방식, 단계별 구현 체크리스트와 30분 실습을 공식 문서 기준으로 정리한 한국어 안내 페이지">
+<link rel="icon" type="image/png" href="https://www.databricks.com/en-website-assets/favicon-32x32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --lava:#FF3621; --lava-d:#E02E1B; --lava-l:#FF8A75; --lava-bg:#FFEDE9;
+    --navy:#0B2026; --navy8:#1B3139; --teal:#1B5162; --muted:#5A6F77;
+    --oat:#F7F5F2; --oat2:#EEEDE9; --line:#E3E0DA; --line2:#EEEBE6;
+    --ok:#00A972; --ok-d:#008A5E; --ok-bg:#E8F6EF;
+    --mid:#C98A12; --mid-bg:#FFF5E0; --sky:#8FB4CC; --sky-bg:#F3F7FA;
+    --code-bg:#0F2329;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+  body { margin: 0; font-family: 'Noto Sans KR', -apple-system, sans-serif; color: var(--navy); background: #fff; line-height: 1.75; font-size: 16px; -webkit-font-smoothing: antialiased; word-break: keep-all; overflow-wrap: break-word; }
+  a { color: var(--teal); text-decoration: underline; text-decoration-color: rgba(27,81,98,.35); text-underline-offset: 3px; }
+  a:hover { color: var(--lava-d); text-decoration-color: var(--lava); }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em; background: var(--oat2); padding: 1px 6px; border-radius: 4px; color: var(--navy8); word-break: normal; overflow-wrap: anywhere; }
+
+  /* layout */
+  .layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); max-width: 1260px; margin: 0 auto; }
+  nav.toc { position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 28px 18px 28px 24px; border-right: 1px solid var(--line2); font-size: 14px; }
+  nav.toc .brand img { height: 20px; display: block; margin-bottom: 22px; }
+  nav.toc .toc-title { font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; }
+  nav.toc ol { list-style: none; padding: 0; margin: 0; }
+  nav.toc li a { display: block; padding: 6px 10px; border-radius: 6px; color: var(--navy8); text-decoration: none; line-height: 1.45; }
+  nav.toc li a:hover { background: var(--oat); color: var(--lava-d); }
+  nav.toc li a.active { background: var(--lava-bg); color: var(--lava-d); font-weight: 700; }
+  nav.toc li.sub a { padding-left: 22px; font-size: 13px; color: var(--muted); }
+  nav.toc .toc-foot { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line2); font-size: 12px; color: var(--muted); line-height: 1.6; }
+  main { padding: 0 56px 80px; min-width: 0; }
+
+  /* hero */
+  header.hero { padding: 64px 0 40px; border-bottom: 1px solid var(--line2); margin-bottom: 8px; }
+  .hero .mobile-brand { display: none; height: 20px; margin-bottom: 24px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--lava-d); letter-spacing: .04em; }
+  .eyebrow img { width: 22px; height: 22px; }
+  h1 { font-size: 44px; line-height: 1.25; font-weight: 800; margin: 14px 0 16px; letter-spacing: -.02em; }
+  h1 .accent { color: var(--lava); }
+  .lead { font-size: 19px; color: var(--navy8); max-width: 820px; margin: 0 0 22px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13.5px; color: var(--muted); }
+  .meta span::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--lava-l); margin-right: 8px; vertical-align: middle; }
+  .notice { margin-top: 22px; background: var(--oat); border-left: 3px solid var(--sky); padding: 12px 16px; font-size: 14px; color: var(--navy8); border-radius: 0 8px 8px 0; max-width: 860px; }
+
+  /* sections */
+  section { padding: 52px 0 8px; }
+  .sec-no { font-size: 13px; font-weight: 700; color: var(--lava); letter-spacing: .1em; }
+  h2 { font-size: 30px; line-height: 1.35; margin: 6px 0 18px; font-weight: 800; letter-spacing: -.01em; }
+  h3 { font-size: 20px; margin: 34px 0 12px; font-weight: 700; }
+  h4 { font-size: 16.5px; margin: 0 0 6px; font-weight: 700; }
+  p { margin: 0 0 14px; }
+  .muted { color: var(--muted); }
+  ul.spark { list-style: none; padding: 0; margin: 0 0 14px; }
+  ul.spark li { position: relative; padding-left: 26px; margin: 6px 0; }
+  ul.spark li::before { content: ""; position: absolute; left: 2px; top: .52em; width: 14px; height: 14px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FF3621' d='M9 1.5c.6 4.9 3 7.3 7.9 7.9C12 10 9.6 12.4 9 17.3 8.4 12.4 6 10 1.1 9.4 6 8.8 8.4 6.4 9 1.5z'/%3E%3Cpath fill='%23FF8A75' d='M18.3 12.6c.35 2.9 1.750 4.3 4.6 4.6-2.85.35-4.25 1.75-4.6 4.6-.35-2.85-1.75-4.25-4.6-4.6 2.85-.3 4.25-1.7 4.6-4.6z'/%3E%3C/svg%3E") no-repeat center / contain; }
+
+  /* cards */
+  .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin: 18px 0 8px; }
+  .card { background: var(--oat); border-radius: 12px; padding: 20px 22px; }
+  .card .k { font-size: 12.5px; font-weight: 700; color: var(--lava-d); letter-spacing: .06em; margin-bottom: 6px; }
+  .card p:last-child { margin-bottom: 0; }
+
+  /* problem illustration */
+  .problem { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0; }
+  .problem .box { border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .problem .box.see { background: var(--sky-bg); border-color: #DCE7EF; }
+  .problem .box.need { background: var(--lava-bg); border-color: #FFD6CD; }
+  .problem .q { grid-column: 1 / -1; background: var(--navy); color: #fff; border-radius: 12px; padding: 16px 22px; font-size: 17px; }
+  .problem .q b { color: var(--lava-l); }
+  .problem table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .problem td { padding: 5px 0; vertical-align: top; border-bottom: 1px dashed rgba(11,32,38,.12); }
+  .problem tr:last-child td { border-bottom: 0; }
+  .problem td:first-child { font-weight: 700; width: 38%; padding-right: 10px; }
+  .problem .box.see td:first-child { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 500; font-size: 13px; }
+
+  /* tables */
+  .tbl-wrap { overflow-x: auto; margin: 16px 0 10px; border: 1px solid var(--line); border-radius: 12px; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  table.t th, table.t td { padding: 12px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line2); }
+  table.t thead th { background: var(--oat); font-size: 13.5px; color: var(--navy8); font-weight: 700; white-space: nowrap; }
+  table.t tbody tr:last-child td { border-bottom: 0; }
+  table.t td:first-child { font-weight: 700; white-space: nowrap; }
+  table.t.status td:nth-child(3) { white-space: nowrap; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 9px; border-radius: 999px; white-space: nowrap; }
+  .pill.ga { background: var(--ok-bg); color: var(--ok-d); }
+  .pill.beta { background: var(--mid-bg); color: #8A5D00; }
+  .pill.pp { background: var(--sky-bg); color: var(--teal); border: 1px solid #DCE7EF; }
+  .pill.eol { background: var(--lava-bg); color: var(--lava-d); }
+
+  /* diagram */
+  figure.diagram { margin: 20px 0 8px; background: var(--oat); border-radius: 14px; padding: 18px; }
+  figure.diagram svg { width: 100%; height: auto; display: block; }
+  figure.shot { margin: 16px 0 8px; }
+  figure.shot img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 10px; }
+  figure.shot figcaption { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  figure.diagram .swipe { display: none; font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+  figure.diagram figcaption { font-size: 13px; color: var(--muted); margin-top: 8px; text-align: center; }
+
+  /* callouts */
+  .callout { border-radius: 10px; padding: 14px 18px; margin: 16px 0; font-size: 15px; }
+  .callout.warn { background: var(--mid-bg); border-left: 4px solid var(--mid); }
+  .callout.tip { background: var(--ok-bg); border-left: 4px solid var(--ok); }
+  .callout.info { background: var(--sky-bg); border-left: 4px solid var(--sky); }
+  .callout .h { font-weight: 700; display: block; margin-bottom: 2px; }
+  .callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+
+  /* checklist */
+  .steps { counter-reset: step; margin: 18px 0; display: grid; gap: 14px; }
+  .step { border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px 16px 68px; position: relative; background: #fff; }
+  .step::before { counter-increment: step; content: counter(step, decimal-leading-zero); position: absolute; left: 20px; top: 17px; font-weight: 800; font-size: 18px; color: var(--lava); }
+  .step .who { display: inline-block; font-size: 12px; font-weight: 700; color: var(--teal); background: var(--sky-bg); border-radius: 4px; padding: 0 8px; margin-left: 8px; vertical-align: 2px; }
+  .step label.chk { display: flex; gap: 10px; align-items: flex-start; margin: 4px 0; cursor: pointer; font-size: 15px; }
+  .step label.chk input { margin-top: 6px; accent-color: var(--lava); width: 16px; height: 16px; flex: none; }
+  .step label.chk input:checked + span { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(90,111,119,.5); }
+  .step .ref { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .progress { font-size: 13.5px; color: var(--muted); margin-top: -4px; }
+  .progress b { color: var(--lava-d); }
+
+  /* code */
+  .code { position: relative; margin: 12px 0 16px; }
+  .code .lang { position: absolute; top: 0; left: 16px; transform: translateY(-50%); font-size: 11px; font-weight: 700; letter-spacing: .06em; background: var(--lava); color: #fff; padding: 1px 8px; border-radius: 4px; }
+  .code pre { margin: 0; background: var(--code-bg); color: #E8EEF0; border-radius: 10px; padding: 20px 18px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.6; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .code pre .c { color: #8FA9B2; }
+  .code pre .s { color: #FFB4A6; }
+  .code pre .k { color: #9FD8C3; }
+  .code button.copy { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,.1); color: #E8EEF0; border: 1px solid rgba(255,255,255,.2); border-radius: 6px; font-size: 12px; padding: 3px 10px; cursor: pointer; font-family: inherit; }
+  .code button.copy:hover { background: rgba(255,255,255,.2); }
+  .result { background: var(--oat); border-radius: 10px; padding: 14px 18px; font-size: 14.5px; margin: 10px 0 16px; }
+  .result .h { font-weight: 700; color: var(--ok-d); display: block; margin-bottom: 4px; }
+
+  /* lab */
+  .lab-step { border-left: 3px solid var(--lava-l); padding: 2px 0 2px 20px; margin: 26px 0; }
+  .lab-step h4 { font-size: 17px; }
+  .lab-step h4 .n { color: var(--lava); margin-right: 6px; }
+  .tag-opt { font-size: 12px; font-weight: 700; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; margin-left: 6px; vertical-align: 2px; }
+
+  /* refs */
+  .refs { columns: 2; column-gap: 36px; font-size: 14.5px; }
+  .refs .grp { break-inside: avoid; margin-bottom: 18px; }
+  .refs .grp h4 { font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+  .refs ul { margin: 0; padding-left: 18px; }
+  .refs li { margin: 3px 0; }
+  .refs .cl { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+  footer { margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line2); font-size: 13px; color: var(--muted); }
+  .glossary { font-size: 14px; }
+  .glossary dt { font-weight: 700; float: left; clear: left; width: 150px; }
+  .glossary dd { margin: 0 0 10px 160px; }
+  abbr[title] { text-decoration: underline dotted rgba(11,32,38,.4); cursor: help; }
+
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.toc { display: none; }
+    main { padding: 0 22px 60px; }
+    .hero .mobile-brand { display: block; }
+    h1 { font-size: 32px; }
+    .problem { grid-template-columns: 1fr; }
+    figure.diagram { padding: 12px; }
+    figure.diagram .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    figure.diagram svg { min-width: 860px; }
+    figure.diagram .swipe { display: block; }
+    .step { padding-left: 56px; }
+    .step::before { left: 16px; }
+    .refs { columns: 1; }
+    .glossary dt { float: none; width: auto; }
+    .glossary dd { margin-left: 0; }
+  }
+  @media print {
+    @page { size: A4; margin: 14mm; }
+    nav.toc, .code button.copy { display: none !important; }
+    .layout { display: block; }
+    main { padding: 0; }
+    section { break-inside: auto; }
+    .step, .card, figure.diagram, figure.shot, .code, .tbl-wrap { break-inside: avoid; }
+    .code pre { white-space: pre-wrap; }
+    a { color: var(--navy); }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="목차">
+    <div class="brand"><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTMyIiBoZWlnaHQ9IjIyIiB2aWV3Qm94PSIwIDAgMTMyIDIyIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Im0xOC4zMTggOS4yNzUtOC42MzEgNC44NTlMLjQ0NSA4Ljk0MiAwIDkuMTgydjMuNzdsOS42ODcgNS40MzEgOC42My00Ljg0djEuOTk1bC04LjYzIDQuODYtOS4yNDItNS4xOTItLjQ0NS4yNHYuNjQ2bDkuNjg3IDUuNDMyIDkuNjY4LTUuNDMydi0zLjc2OWwtLjQ0NS0uMjQtOS4yMjMgNS4xNzMtOC42NS00Ljg0VjEwLjQybDguNjUgNC44NCA5LjY2OC01LjQzVjYuMTE0bC0uNDgyLS4yNzctOS4xODYgNS4xNTVMMS40ODIgNi40MWw4LjIwNS00LjYgNi43NDEgMy43ODcuNTkzLS4zMzJ2LS40NjJMOS42ODcuNjg0IDAgNi4xMTV2LjU5Mmw5LjY4NyA1LjQzMiA4LjYzLTQuODZ6IiBmaWxsPSIjRUUzRDJDIi8+PHBhdGggZD0iTTM3LjQ0OSAxOC40NDNWMS44NTJoLTIuNTU2djYuMjA3YzAgLjA5My0uMDU2LjE2Ny0uMTQ4LjIwNGEuMjMuMjMgMCAwIDEtLjI0LS4wNTZjLS44NzEtMS4wMTYtMi4yMjMtMS41ODktMy43MDUtMS41ODktMy4xNjcgMC01LjY1IDIuNjYtNS42NSA2LjA2IDAgMS42NjMuNTc1IDMuMTk3IDEuNjMgNC4zMjRhNS40NCA1LjQ0IDAgMCAwIDQuMDIgMS43MzZjMS40NjMgMCAyLjgxNS0uNjEgMy43MDQtMS42NjIuMDU2LS4wNzQuMTY3LS4wOTMuMjQtLjA3NC4wOTMuMDM3LjE1LjExLjE1LjIwM3YxLjIzOHptLTYuMDkzLTIuMDE0Yy0yLjAzOCAwLTMuNjMtMS42NDQtMy42My0zLjc1IDAtMi4xMDcgMS41OTItMy43NTEgMy42My0zLjc1MXMzLjYzIDEuNjQ0IDMuNjMgMy43NS0xLjU5MyAzLjc1LTMuNjMgMy43NW0xOS43NjIgMi4wMTZWNi44OTZoLTIuNTM3VjguMDZjMCAuMDkzLS4wNTYuMTY2LS4xNDkuMjAzYS4yLjIgMCAwIDEtLjI0LS4wNzNjLS44NTItMS4wMTctMi4xODYtMS41OS0zLjcwNS0xLjU5LTMuMTY3IDAtNS42NDkgMi42NjEtNS42NDkgNi4wNiAwIDMuNCAyLjQ4MiA2LjA2IDUuNjUgNi4wNiAxLjQ2MyAwIDIuODE1LS42MSAzLjcwNC0xLjY4LjA1NS0uMDc1LjE2Ni0uMDkzLjI0LS4wNzUuMDkzLjAzNy4xNDkuMTExLjE0OS4yMDR2MS4yNTZoMi41Mzd6bS02LjA1Ni0yLjAxNGMtMi4wMzggMC0zLjYzLTEuNjQ1LTMuNjMtMy43NSAwLTIuMTA3IDEuNTkyLTMuNzUxIDMuNjMtMy43NTFzMy42MyAxLjY0NCAzLjYzIDMuNzUtMS41OTMgMy43NS0zLjYzIDMuNzVtMjcuNzgxIDIuMDE1VjYuODk2aC0yLjUzOFY4LjA2YzAgLjA5My0uMDU1LjE2Ni0uMTQ4LjIwM3MtLjE4NSAwLS4yNC0uMDczYy0uODUzLTEuMDE3LTIuMTg2LTEuNTktMy43MDUtMS41OS0zLjE4NiAwLTUuNjQ5IDIuNjYxLTUuNjQ5IDYuMDggMCAzLjQxNyAyLjQ4MiA2LjA2IDUuNjQ5IDYuMDYgMS40NjMgMCAyLjgxNS0uNjEgMy43MDQtMS42ODIuMDU2LS4wNzQuMTY3LS4wOTMuMjQxLS4wNzQuMDkzLjAzNy4xNDguMTEuMTQ4LjIwM3YxLjI1NnptLTYuMDU3LTIuMDE0Yy0yLjAzNyAwLTMuNjMtMS42NDUtMy42My0zLjc1IDAtMi4xMDcgMS41OTMtMy43NTEgMy42My0zLjc1MXMzLjYzIDEuNjQ0IDMuNjMgMy43NS0xLjU5MyAzLjc1LTMuNjMgMy43NW0xMC43MDYuNjQ3Yy4wMTkgMCAuMDU2LS4wMTkuMDc0LS4wMTkuMDU2IDAgLjEzLjAzNy4xNjcuMDc0Ljg3IDEuMDE2IDIuMjIyIDEuNTg5IDMuNzA0IDEuNTg5IDMuMTY3IDAgNS42NS0yLjY2IDUuNjUtNi4wNiAwLTEuNjYzLS41NzUtMy4xOTYtMS42My00LjMyM2E1LjQ0IDUuNDQgMCAwIDAtNC4wMi0xLjczN2MtMS40NjMgMC0yLjgxNS42MS0zLjcwNCAxLjY2My0uMDU2LjA3NC0uMTQ4LjA5Mi0uMjQuMDc0LS4wOTMtLjAzNy0uMTQ5LS4xMTEtLjE0OS0uMjA0VjEuODUyaC0yLjU1NnYxNi41OWgyLjU1NlYxNy4yOGMwLS4wOTMuMDU2LS4xNjYuMTQ4LS4yMDNtLS4yNi00LjM5OGMwLTIuMTA2IDEuNTk0LTMuNzUgMy42MzEtMy43NXMzLjYzIDEuNjQ0IDMuNjMgMy43NS0xLjU5MyAzLjc1LTMuNjMgMy43NS0zLjYzLTEuNjYyLTMuNjMtMy43NW0xNy4yNDQtMy40MTZjLjI0IDAgLjQ2My4wMTkuNjEuMDU2VjYuNjk1YTIuNCAyLjQgMCAwIDAtLjQyNS0uMDM3Yy0xLjMzNCAwLTIuNTU2LjY4NC0zLjIwNCAxLjc3NC0uMDU2LjA5Mi0uMTQ5LjEzLS4yNDEuMDkyYS4yMi4yMiAwIDAgMS0uMTY3LS4yMDNWNi44OThoLTIuNTM3djExLjU2NmgyLjU1NnYtNS4xYzAtMi41MyAxLjI5Ni00LjEgMy40MDgtNC4xbTQuODE1LTIuMzY3aC0yLjU5M3YxMS41NjZoMi41OTN6TTk3Ljk1OCAxLjg3YTEuNTcxIDEuNTcxIDAgMSAwIDAgMy4xNDEgMS41NzEgMS41NzEgMCAxIDAgMC0zLjE0bTguOTI4IDQuNzI5Yy0zLjU1NiAwLTYuMTMxIDIuNTUtNi4xMzEgNi4wOCAwIDEuNzE3LjYxMiAzLjI1IDEuNzA0IDQuMzYgMS4xMTIgMS4xMDggMi42NjcgMS43MTggNC40MDggMS43MTggMS40NDUgMCAyLjU1Ni0uMjc3IDQuNjY4LTEuODNsLTEuNDYzLTEuNTMzYy0xLjAzOC42ODQtMi4wMDEgMS4wMTYtMi45NDUgMS4wMTYtMi4xNDkgMC0zLjc2LTEuNjA3LTMuNzYtMy43MzJzMS42MTEtMy43MzIgMy43Ni0zLjczMmMxLjAxOCAwIDEuOTYzLjMzMyAyLjkwOCAxLjAxNmwxLjYyOS0xLjUzM2MtMS45MDctMS42MjYtMy42My0xLjgzLTQuNzc4LTEuODNtOS4xNDkgNi43NjJhLjIuMiAwIDAgMSAuMTQ5LS4wNTVoLjAxOGMuMDU2IDAgLjExMS4wMzcuMTY3LjA3M2w0LjA5MyA1LjA2M2gzLjE0OWwtNS4yOTctNi4zOTNjLS4wNzUtLjA5Mi0uMDc1LS4yMjIuMDE4LS4yOTVsNC44NzEtNC44NmgtMy4xM2wtNC4yMDQgNC4yMTNjLS4wNTYuMDU1LS4xNDguMDc0LS4yNDEuMDU1YS4yMy4yMyAwIDAgMS0uMTMtLjIwM1YxLjg3aC0yLjU3NHYxNi41OTFoMi41NTZ2LTQuNTA4YzAtLjA1NS4wMTgtLjEzLjA3NC0uMTY2eiIgZmlsbD0iIzAwMCIvPjxwYXRoIGQ9Ik0xMjcuNzc2IDE4LjczOWMyLjA5MyAwIDQuMjIzLTEuMjc1IDQuMjIzLTMuNjk1IDAtMS41ODktMS0yLjY4LTMuMDM3LTMuMzQ0bC0xLjM5LS40NjJjLS45NDQtLjMxNC0xLjM4OS0uNzU4LTEuMzg5LTEuMzY3IDAtLjcwMi42My0xLjE4MyAxLjUxOS0xLjE4My44NTIgMCAxLjYxMS41NTUgMi4wOTMgMS41MTVsMi4wNTYtMS4xMDhjLS43NTktMS41NTItMi4zMzQtMi41MTMtNC4xNDktMi41MTMtMi4yOTcgMC0zLjk2MyAxLjQ3OC0zLjk2MyAzLjQ5MiAwIDEuNjA3Ljk2MyAyLjY3OSAyLjk0NCAzLjMwN2wxLjQyNy40NjJjMSAuMzE0IDEuNDI2LjcyIDEuNDI2IDEuMzY3IDAgLjk4LS45MDggMS4zMy0xLjY4NiAxLjMzLTEuMDM3IDAtMS45NjMtLjY2NS0yLjQwNy0xLjc1NWwtMi4wOTMgMS4xMDljLjY4NSAxLjc1NSAyLjM3IDIuODQ1IDQuNDI2IDIuODQ1bS02OS41NDYtLjExMWMuODE1IDAgMS41MzgtLjA3NCAxLjk0NS0uMTN2LTIuMjE2YTE0IDE0IDAgMCAxLTEuMjc4LjA3M2MtMS4wMzcgMC0xLjgzMy0uMTg0LTEuODMzLTIuNDJWOS4xODdjMC0uMTMuMDkyLS4yMjIuMjIyLS4yMjJoMi41VjYuODc3aC0yLjVhLjIxNC4yMTQgMCAwIDEtLjIyMi0uMjIxVjMuMzNoLTIuNTU2djMuMzQ0YzAgLjEzLS4wOTMuMjIyLS4yMjMuMjIyaC0xLjc3OHYyLjA4OGgxLjc3OGMuMTMgMCAuMjIzLjA5Mi4yMjMuMjIxdjUuMzc3YzAgNC4wNDYgMi43MDQgNC4wNDYgMy43MjIgNC4wNDYiIGZpbGw9IiMwMDAiLz48L3N2Zz4=" alt="Databricks"></div>
+    <p class="toc-title">목차</p>
+    <ol>
+      <li><a href="#summary">한눈에 보기</a></li>
+      <li><a href="#why">01 왜 온톨로지인가</a></li>
+      <li><a href="#what">02 Genie Ontology란</a></li>
+      <li><a href="#knowledge">03 두 종류의 지식</a></li>
+      <li><a href="#how">04 동작 방식</a></li>
+      <li><a href="#build">05 구현 체크리스트</a></li>
+      <li class="sub"><a href="#ex-metric">예시 ① 메트릭 뷰</a></li>
+      <li class="sub"><a href="#ex-cert">예시 ② 인증·폐기</a></li>
+      <li class="sub"><a href="#ex-mcp">예시 ③ 외부 에이전트 연결</a></li>
+      <li><a href="#lab">06 30분 실습</a></li>
+      <li><a href="#status">07 기능별 상태</a></li>
+      <li><a href="#refs">08 참고 문서·용어</a></li>
+    </ol>
+    <div class="toc-foot">기준일 2026-11-20<br>공식 문서 기준 한글 정리</div>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <img class="mobile-brand" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTMyIiBoZWlnaHQ9IjIyIiB2aWV3Qm94PSIwIDAgMTMyIDIyIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Im0xOC4zMTggOS4yNzUtOC42MzEgNC44NTlMLjQ0NSA4Ljk0MiAwIDkuMTgydjMuNzdsOS42ODcgNS40MzEgOC42My00Ljg0djEuOTk1bC04LjYzIDQuODYtOS4yNDItNS4xOTItLjQ0NS4yNHYuNjQ2bDkuNjg3IDUuNDMyIDkuNjY4LTUuNDMydi0zLjc2OWwtLjQ0NS0uMjQtOS4yMjMgNS4xNzMtOC42NS00Ljg0VjEwLjQybDguNjUgNC44NCA5LjY2OC01LjQzVjYuMTE0bC0uNDgyLS4yNzctOS4xODYgNS4xNTVMMS40ODIgNi40MWw4LjIwNS00LjYgNi43NDEgMy43ODcuNTkzLS4zMzJ2LS40NjJMOS42ODcuNjg0IDAgNi4xMTV2LjU5Mmw5LjY4NyA1LjQzMiA4LjYzLTQuODZ6IiBmaWxsPSIjRUUzRDJDIi8+PHBhdGggZD0iTTM3LjQ0OSAxOC40NDNWMS44NTJoLTIuNTU2djYuMjA3YzAgLjA5My0uMDU2LjE2Ny0uMTQ4LjIwNGEuMjMuMjMgMCAwIDEtLjI0LS4wNTZjLS44NzEtMS4wMTYtMi4yMjMtMS41ODktMy43MDUtMS41ODktMy4xNjcgMC01LjY1IDIuNjYtNS42NSA2LjA2IDAgMS42NjMuNTc1IDMuMTk3IDEuNjMgNC4zMjRhNS40NCA1LjQ0IDAgMCAwIDQuMDIgMS43MzZjMS40NjMgMCAyLjgxNS0uNjEgMy43MDQtMS42NjIuMDU2LS4wNzQuMTY3LS4wOTMuMjQtLjA3NC4wOTMuMDM3LjE1LjExLjE1LjIwM3YxLjIzOHptLTYuMDkzLTIuMDE0Yy0yLjAzOCAwLTMuNjMtMS42NDQtMy42My0zLjc1IDAtMi4xMDcgMS41OTItMy43NTEgMy42My0zLjc1MXMzLjYzIDEuNjQ0IDMuNjMgMy43NS0xLjU5MyAzLjc1LTMuNjMgMy43NW0xOS43NjIgMi4wMTZWNi44OTZoLTIuNTM3VjguMDZjMCAuMDkzLS4wNTYuMTY2LS4xNDkuMjAzYS4yLjIgMCAwIDEtLjI0LS4wNzNjLS44NTItMS4wMTctMi4xODYtMS41OS0zLjcwNS0xLjU5LTMuMTY3IDAtNS42NDkgMi42NjEtNS42NDkgNi4wNiAwIDMuNCAyLjQ4MiA2LjA2IDUuNjUgNi4wNiAxLjQ2MyAwIDIuODE1LS42MSAzLjcwNC0xLjY4LjA1NS0uMDc1LjE2Ni0uMDkzLjI0LS4wNzUuMDkzLjAzNy4xNDkuMTExLjE0OS4yMDR2MS4yNTZoMi41Mzd6bS02LjA1Ni0yLjAxNGMtMi4wMzggMC0zLjYzLTEuNjQ1LTMuNjMtMy43NSAwLTIuMTA3IDEuNTkyLTMuNzUxIDMuNjMtMy43NTFzMy42MyAxLjY0NCAzLjYzIDMuNzUtMS41OTMgMy43NS0zLjYzIDMuNzVtMjcuNzgxIDIuMDE1VjYuODk2aC0yLjUzOFY4LjA2YzAgLjA5My0uMDU1LjE2Ni0uMTQ4LjIwM3MtLjE4NSAwLS4yNC0uMDczYy0uODUzLTEuMDE3LTIuMTg2LTEuNTktMy43MDUtMS41OS0zLjE4NiAwLTUuNjQ5IDIuNjYxLTUuNjQ5IDYuMDggMCAzLjQxNyAyLjQ4MiA2LjA2IDUuNjQ5IDYuMDYgMS40NjMgMCAyLjgxNS0uNjEgMy43MDQtMS42ODIuMDU2LS4wNzQuMTY3LS4wOTMuMjQxLS4wNzQuMDkzLjAzNy4xNDguMTEuMTQ4LjIwM3YxLjI1NnptLTYuMDU3LTIuMDE0Yy0yLjAzNyAwLTMuNjMtMS42NDUtMy42My0zLjc1IDAtMi4xMDcgMS41OTMtMy43NTEgMy42My0zLjc1MXMzLjYzIDEuNjQ0IDMuNjMgMy43NS0xLjU5MyAzLjc1LTMuNjMgMy43NW0xMC43MDYuNjQ3Yy4wMTkgMCAuMDU2LS4wMTkuMDc0LS4wMTkuMDU2IDAgLjEzLjAzNy4xNjcuMDc0Ljg3IDEuMDE2IDIuMjIyIDEuNTg5IDMuNzA0IDEuNTg5IDMuMTY3IDAgNS42NS0yLjY2IDUuNjUtNi4wNiAwLTEuNjYzLS41NzUtMy4xOTYtMS42My00LjMyM2E1LjQ0IDUuNDQgMCAwIDAtNC4wMi0xLjczN2MtMS40NjMgMC0yLjgxNS42MS0zLjcwNCAxLjY2My0uMDU2LjA3NC0uMTQ4LjA5Mi0uMjQuMDc0LS4wOTMtLjAzNy0uMTQ5LS4xMTEtLjE0OS0uMjA0VjEuODUyaC0yLjU1NnYxNi41OWgyLjU1NlYxNy4yOGMwLS4wOTMuMDU2LS4xNjYuMTQ4LS4yMDNtLS4yNi00LjM5OGMwLTIuMTA2IDEuNTk0LTMuNzUgMy42MzEtMy43NXMzLjYzIDEuNjQ0IDMuNjMgMy43NS0xLjU5MyAzLjc1LTMuNjMgMy43NS0zLjYzLTEuNjYyLTMuNjMtMy43NW0xNy4yNDQtMy40MTZjLjI0IDAgLjQ2My4wMTkuNjEuMDU2VjYuNjk1YTIuNCAyLjQgMCAwIDAtLjQyNS0uMDM3Yy0xLjMzNCAwLTIuNTU2LjY4NC0zLjIwNCAxLjc3NC0uMDU2LjA5Mi0uMTQ5LjEzLS4yNDEuMDkyYS4yMi4yMiAwIDAgMS0uMTY3LS4yMDNWNi44OThoLTIuNTM3djExLjU2NmgyLjU1NnYtNS4xYzAtMi41MyAxLjI5Ni00LjEgMy40MDgtNC4xbTQuODE1LTIuMzY3aC0yLjU5M3YxMS41NjZoMi41OTN6TTk3Ljk1OCAxLjg3YTEuNTcxIDEuNTcxIDAgMSAwIDAgMy4xNDEgMS41NzEgMS41NzEgMCAxIDAgMC0zLjE0bTguOTI4IDQuNzI5Yy0zLjU1NiAwLTYuMTMxIDIuNTUtNi4xMzEgNi4wOCAwIDEuNzE3LjYxMiAzLjI1IDEuNzA0IDQuMzYgMS4xMTIgMS4xMDggMi42NjcgMS43MTggNC40MDggMS43MTggMS40NDUgMCAyLjU1Ni0uMjc3IDQuNjY4LTEuODNsLTEuNDYzLTEuNTMzYy0xLjAzOC42ODQtMi4wMDEgMS4wMTYtMi45NDUgMS4wMTYtMi4xNDkgMC0zLjc2LTEuNjA3LTMuNzYtMy43MzJzMS42MTEtMy43MzIgMy43Ni0zLjczMmMxLjAxOCAwIDEuOTYzLjMzMyAyLjkwOCAxLjAxNmwxLjYyOS0xLjUzM2MtMS45MDctMS42MjYtMy42My0xLjgzLTQuNzc4LTEuODNtOS4xNDkgNi43NjJhLjIuMiAwIDAgMSAuMTQ5LS4wNTVoLjAxOGMuMDU2IDAgLjExMS4wMzcuMTY3LjA3M2w0LjA5MyA1LjA2M2gzLjE0OWwtNS4yOTctNi4zOTNjLS4wNzUtLjA5Mi0uMDc1LS4yMjIuMDE4LS4yOTVsNC44NzEtNC44NmgtMy4xM2wtNC4yMDQgNC4yMTNjLS4wNTYuMDU1LS4xNDguMDc0LS4yNDEuMDU1YS4yMy4yMyAwIDAgMS0uMTMtLjIwM1YxLjg3aC0yLjU3NHYxNi41OTFoMi41NTZ2LTQuNTA4YzAtLjA1NS4wMTgtLjEzLjA3NC0uMTY2eiIgZmlsbD0iIzAwMCIvPjxwYXRoIGQ9Ik0xMjcuNzc2IDE4LjczOWMyLjA5MyAwIDQuMjIzLTEuMjc1IDQuMjIzLTMuNjk1IDAtMS41ODktMS0yLjY4LTMuMDM3LTMuMzQ0bC0xLjM5LS40NjJjLS45NDQtLjMxNC0xLjM4OS0uNzU4LTEuMzg5LTEuMzY3IDAtLjcwMi42My0xLjE4MyAxLjUxOS0xLjE4My44NTIgMCAxLjYxMS41NTUgMi4wOTMgMS41MTVsMi4wNTYtMS4xMDhjLS43NTktMS41NTItMi4zMzQtMi41MTMtNC4xNDktMi41MTMtMi4yOTcgMC0zLjk2MyAxLjQ3OC0zLjk2MyAzLjQ5MiAwIDEuNjA3Ljk2MyAyLjY3OSAyLjk0NCAzLjMwN2wxLjQyNy40NjJjMSAuMzE0IDEuNDI2LjcyIDEuNDI2IDEuMzY3IDAgLjk4LS45MDggMS4zMy0xLjY4NiAxLjMzLTEuMDM3IDAtMS45NjMtLjY2NS0yLjQwNy0xLjc1NWwtMi4wOTMgMS4xMDljLjY4NSAxLjc1NSAyLjM3IDIuODQ1IDQuNDI2IDIuODQ1bS02OS41NDYtLjExMWMuODE1IDAgMS41MzgtLjA3NCAxLjk0NS0uMTN2LTIuMjE2YTE0IDE0IDAgMCAxLTEuMjc4LjA3M2MtMS4wMzcgMC0xLjgzMy0uMTg0LTEuODMzLTIuNDJWOS4xODdjMC0uMTMuMDkyLS4yMjIuMjIyLS4yMjJoMi41VjYuODc3aC0yLjVhLjIxNC4yMTQgMCAwIDEtLjIyMi0uMjIxVjMuMzNoLTIuNTU2djMuMzQ0YzAgLjEzLS4wOTMuMjIyLS4yMjMuMjIyaC0xLjc3OHYyLjA4OGgxLjc3OGMuMTMgMCAuMjIzLjA5Mi4yMjMuMjIxdjUuMzc3YzAgNC4wNDYgMi43MDQgNC4wNDYgMy43MjIgNC4wNDYiIGZpbGw9IiMwMDAiLz48L3N2Zz4=" alt="Databricks">
+      <span class="eyebrow"><img src="https://www.databricks.com/sites/default/files/2026-03/icon-genie.svg" alt="">Genie · Unity Catalog semantics</span>
+      <h1>Databricks <span class="accent">Genie Ontology</span></h1>
+      <p class="lead">AI 에이전트가 테이블 이름이 아니라 <b>회사의 비즈니스 언어</b>로 답하게 만드는 컨텍스트 레이어. 무엇이고 어떻게 동작하는지, 그리고 무엇부터 준비하면 되는지 정리했습니다.</p>
+      <div class="meta">
+        <span>기준일 2026-11-20</span>
+        <span>AWS · Azure 공식 문서와 릴리스 노트 기준</span>
+        <span>대상: 데이터 스튜어드 · 분석/AI 플랫폼 담당자</span>
+      </div>
+      <div class="notice">이 페이지는 Databricks 공식 문서를 바탕으로 정리한 <b>한국어 안내</b>입니다. 기능과 상태는 빠르게 바뀌므로 도입 전에는 <a href="#refs">참고 문서</a>의 원문을 확인하세요.</div>
+    </header>
+
+    <section id="summary">
+      <span class="sec-no">SUMMARY</span>
+      <h2>한눈에 보기</h2>
+      <div class="cards">
+        <div class="card"><div class="k">무엇인가</div><p>Genie One·Genie Code와 외부 AI 에이전트가 함께 쓰는 <b>비즈니스 컨텍스트 지도</b>입니다. 2026-11-09에 GA(General Availability, 정식 출시)됐고 기본으로 켜져 있습니다.</p></div>
+        <div class="card"><div class="k">어떻게 만들어지나</div><p>기존 자산과 사용 이력에서 <b>자동으로 학습</b>한 지식에, 사람이 <b>직접 정의하고 인증</b>한 지식을 더합니다. 둘이 충돌하면 사람이 정의한 쪽이 우선합니다.</p></div>
+        <div class="card"><div class="k">무엇부터 할까</div><p>핵심 KPI(Key Performance Indicator, 핵심 성과 지표)를 <b>메트릭 뷰</b>로 정의하고, 믿을 자산은 <b>인증</b>, 오래된 자산은 <b>폐기</b> 표시를 합니다. 나머지는 Genie가 학습합니다.</p></div>
+      </div>
+    </section>
+
+    <section id="why">
+      <span class="sec-no">01</span>
+      <h2>왜 에이전트에게 온톨로지가 필요한가</h2>
+      <p>AI 에이전트가 데이터 플랫폼에서 보는 것은 테이블과 컬럼 이름뿐입니다. 그런데 사람의 질문에는 회사마다 정의가 다른 비즈니스 용어가 섞여 있습니다.</p>
+      <div class="problem">
+        <div class="q">질문: <b>"3분기 활성 고객당 매출은 얼마인가요?"</b></div>
+        <div class="box see">
+          <h4>에이전트가 보는 것</h4>
+          <table>
+            <tr><td>fct_revenue_daily</td><td>net_rev, gross_rev, recog_rev</td></tr>
+            <tr><td>customer_facts</td><td>is_active, active_flag, status</td></tr>
+            <tr><td>revenue_snapshot_q3</td><td>rev_q3, rev_q3_final, rev_q3_adj</td></tr>
+          </table>
+        </div>
+        <div class="box need">
+          <h4>에이전트에게 필요한 것</h4>
+          <table>
+            <tr><td>매출의 정의</td><td>순매출인가, 총매출인가, 인식 매출인가?</td></tr>
+            <tr><td>활성 고객의 기준</td><td>이번 달 로그인? 결제? 둘 다?</td></tr>
+            <tr><td>믿을 원천</td><td>비슷한 매출 테이블 중 어느 것이 공식인가?</td></tr>
+          </table>
+        </div>
+      </div>
+      <p>이 빈칸을 에이전트가 매번 추측하면 세 가지 비용이 생깁니다.</p>
+      <ul class="spark">
+        <li><b>틀린 답</b>: 정의를 잘못 고르면 숫자가 그럴듯하게 틀립니다.</li>
+        <li><b>많은 토큰</b>: 맞는 테이블과 정의를 찾느라 탐색을 반복합니다.</li>
+        <li><b>느린 응답</b>: 질문할 때마다 컨텍스트를 처음부터 다시 추론합니다.</li>
+      </ul>
+      <p>정의를 BI 도구마다 따로 두거나, 별도의 지식 그래프를 사람이 손으로 관리하는 방식은 데이터와 정의가 떨어져 있어 유지하기 어렵습니다. Genie Ontology는 <b>정의를 데이터 플랫폼(Unity Catalog) 위에 두고, 나머지는 자동으로 학습</b>하는 방식으로 이 문제를 풉니다.</p>
+    </section>
+
+    <section id="what">
+      <span class="sec-no">02</span>
+      <h2>Genie Ontology란</h2>
+      <p>공식 문서는 Genie Ontology를 <b>"AI 에이전트에게 조직의 비즈니스를 이해하는 지도를 주는 통합 컨텍스트 레이어"</b>라고 정의합니다. 핵심은 세 가지입니다.</p>
+      <ul class="spark">
+        <li><b>하나의 온톨로지를 여러 곳에서 씁니다.</b> Genie One과 Genie Code가 같은 온톨로지를 검색하므로, 한 번 정리한 컨텍스트가 두 곳에 모두 적용됩니다.</li>
+        <li><b>외부 에이전트도 씁니다.</b> 다른 플랫폼의 에이전트는 Genie One MCP(Model Context Protocol) 서버로 접근하고, 이때도 같은 Unity Catalog(UC) 권한이 적용됩니다.</li>
+        <li><b>권한을 지킵니다.</b> 사용자는 자신이 접근할 수 있는 자산에서 나온 지식만 봅니다.</li>
+      </ul>
+      <figure class="diagram">
+        <span class="swipe">← 좌우로 밀어서 보기 →</span>
+        <div class="scroll"><svg viewBox="0 0 1000 590" role="img" aria-label="Genie Ontology 구성: 위는 Genie와 외부 에이전트, 가운데는 학습된 지식과 모델링된 지식, 아래는 Unity Catalog·Unity Gateway 거버넌스와 데이터·자산·앱 연결">
+          <defs>
+            <marker id="ar2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,10 L5,0 L10,10 z" fill="#5A6F77"/></marker>
+          </defs>
+          <style>
+            .a-lbl{font:700 16px 'Noto Sans KR',sans-serif;fill:#0B2026}
+            .a-big{font:800 19px 'Noto Sans KR',sans-serif;fill:#0B2026}
+            .a-txt{font:400 14px 'Noto Sans KR',sans-serif;fill:#1B3139}
+            .a-sm{font:400 13px 'Noto Sans KR',sans-serif;fill:#5A6F77}
+            .a-cap{font:700 12.5px 'Noto Sans KR',sans-serif;fill:#5A6F77;letter-spacing:.06em}
+            .a-red{font:700 13px 'Noto Sans KR',sans-serif;fill:#E02E1B}
+            .a-pill{font:700 12px 'Noto Sans KR',sans-serif;fill:#fff}
+          </style>
+          <!-- users -->
+          <line x1="40" y1="18" x2="400" y2="18" stroke="#C9C5BE" stroke-width="1.5"/>
+          <line x1="600" y1="18" x2="960" y2="18" stroke="#C9C5BE" stroke-width="1.5"/>
+          <text class="a-cap" x="500" y="23" text-anchor="middle">업무 사용자 · 기술 사용자</text>
+
+          <!-- consumers -->
+          <rect x="40" y="40" width="440" height="74" rx="10" fill="#fff" stroke="#FF3621" stroke-width="1.6"/>
+          <image href="https://www.databricks.com/sites/default/files/2026-03/icon-genie.svg" x="58" y="58" width="36" height="36"/>
+          <text class="a-lbl" x="106" y="72">Genie</text>
+          <text class="a-sm" x="106" y="96">Genie One · Genie Code · Genie Agents</text>
+          <rect x="520" y="40" width="440" height="74" rx="10" fill="#fff" stroke="#C98A12" stroke-width="1.6"/>
+          <text class="a-lbl" x="540" y="72">모든 에이전트 · 클라이언트 · 앱</text>
+          <text class="a-sm" x="540" y="96">Claude · ChatGPT · Cursor · 직접 만든 에이전트</text>
+          <rect x="866" y="56" width="74" height="24" rx="12" fill="#C98A12"/>
+          <text class="a-pill" x="903" y="72" text-anchor="middle">MCP</text>
+
+          <line x1="260" y1="150" x2="260" y2="118" stroke="#5A6F77" stroke-width="1.6" stroke-dasharray="4 4" marker-end="url(#ar2)"/>
+          <line x1="740" y1="150" x2="740" y2="118" stroke="#5A6F77" stroke-width="1.6" stroke-dasharray="4 4" marker-end="url(#ar2)"/>
+          <text class="a-sm" x="752" y="140">Genie One MCP 서버</text>
+
+          <!-- ontology -->
+          <rect x="40" y="154" width="920" height="232" rx="14" fill="#FFEDE9" stroke="#FFD6CD"/>
+          <text class="a-big" x="500" y="186" text-anchor="middle">Genie Ontology</text>
+          <text class="a-red" x="500" y="208" text-anchor="middle">AI 에이전트를 위한 통합 컨텍스트 레이어</text>
+
+          <rect x="62" y="226" width="270" height="140" rx="10" fill="#fff" stroke="#E3E0DA"/>
+          <text class="a-lbl" x="82" y="256">학습된 지식</text>
+          <text class="a-txt" x="82" y="280">자동으로 발견한 컨텍스트</text>
+          <text class="a-sm" x="82" y="306">기존 자산·사용 이력에서 정의, 규칙,</text>
+          <text class="a-sm" x="82" y="326">관계를 스니펫으로 추출·유지</text>
+          <text class="a-sm" x="82" y="350">권위 점수: 출처 · 빈도 · 최신성</text>
+
+          <rect x="668" y="226" width="270" height="140" rx="10" fill="#fff" stroke="#FF3621" stroke-width="1.6"/>
+          <text class="a-lbl" x="688" y="256">모델링된 지식</text>
+          <text class="a-red" x="918" y="256" text-anchor="end">우선 적용</text>
+          <text class="a-txt" x="688" y="280">명시적으로 정의한 비즈니스 시맨틱</text>
+          <text class="a-sm" x="688" y="306">메트릭 뷰(KPI) · 도메인 · Pages</text>
+          <text class="a-sm" x="688" y="326">인증·폐기 · 큐레이션된 Genie Agents</text>
+          <text class="a-sm" x="688" y="350">Unity Catalog semantics로 관리</text>
+
+          <!-- knowledge graph motif -->
+          <ellipse cx="500" cy="300" rx="128" ry="66" fill="none" stroke="#FF8A75" stroke-width="1.5" stroke-dasharray="5 5"/>
+          <g stroke="#C9C5BE" stroke-width="1.2">
+            <line x1="430" y1="280" x2="470" y2="262"/><line x1="470" y1="262" x2="520" y2="276"/><line x1="520" y1="276" x2="565" y2="258"/>
+            <line x1="430" y1="280" x2="452" y2="322"/><line x1="452" y1="322" x2="500" y2="306"/><line x1="500" y1="306" x2="520" y2="276"/>
+            <line x1="500" y1="306" x2="548" y2="330"/><line x1="548" y1="330" x2="580" y2="300"/><line x1="580" y1="300" x2="565" y2="258"/>
+            <line x1="452" y1="322" x2="490" y2="344"/><line x1="490" y1="344" x2="548" y2="330"/><line x1="410" y1="310" x2="452" y2="322"/>
+          </g>
+          <g fill="#fff" stroke="#5A6F77" stroke-width="1.2">
+            <circle cx="430" cy="280" r="7"/><circle cx="565" cy="258" r="7"/><circle cx="452" cy="322" r="7"/><circle cx="580" cy="300" r="7"/><circle cx="490" cy="344" r="6"/><circle cx="410" cy="310" r="5"/>
+          </g>
+          <g fill="#FF3621"><circle cx="470" cy="262" r="8"/><circle cx="520" cy="276" r="9"/><circle cx="500" cy="306" r="8"/><circle cx="548" cy="330" r="7"/></g>
+          <text class="a-red" x="500" y="229" text-anchor="middle">권위</text>
+          <text class="a-red" x="366" y="352" text-anchor="middle">관련성</text>
+          <text class="a-red" x="634" y="352" text-anchor="middle">권한</text>
+          <line x1="332" y1="296" x2="370" y2="296" stroke="#5A6F77" stroke-width="1.4"/>
+          <line x1="630" y1="296" x2="668" y2="296" stroke="#5A6F77" stroke-width="1.4"/>
+
+          <!-- governance -->
+          <rect x="40" y="402" width="920" height="54" rx="10" fill="#E8F6EF" stroke="#B5E3CF"/>
+          <image href="https://www.databricks.com/sites/default/files/2026-01/icon-unity-catalog.svg" x="62" y="415" width="28" height="28"/>
+          <text class="a-lbl" x="98" y="435">Unity Catalog</text>
+          <image href="https://www.databricks.com/sites/default/files/2026-08/icon-unity-ai-gateway.svg" x="236" y="415" width="28" height="28"/>
+          <text class="a-lbl" x="272" y="435">Unity Gateway</text>
+          <text class="a-sm" x="940" y="435" text-anchor="end">거버넌스 기반 접근 · 사용자는 볼 수 있는 자산에서 나온 지식만 사용</text>
+
+          <!-- connectivity -->
+          <rect x="40" y="472" width="920" height="100" rx="10" fill="#fff" stroke="#E3E0DA"/>
+          <text class="a-cap" x="60" y="496">원천 · 개방형 연결</text>
+          <text class="a-lbl" x="60" y="526">레이크하우스 데이터</text>
+          <text class="a-sm" x="60" y="550">Delta · Iceberg 테이블</text>
+          <text class="a-lbl" x="268" y="526">연합 데이터</text>
+          <text class="a-sm" x="268" y="550">Lakehouse Federation</text>
+          <text class="a-lbl" x="460" y="526">워크스페이스 자산</text>
+          <text class="a-sm" x="460" y="550">메트릭 뷰 · 대시보드 · 쿼리 · Genie Agents</text>
+          <text class="a-lbl" x="742" y="526">업무 앱 · 지식 시스템</text>
+          <text class="a-sm" x="742" y="550">Genie Search · 외부 지식 소스</text>
+        </svg></div>
+        <figcaption>Genie Ontology의 구성. Databricks의 Genie Ontology 소개 자료 구조를 공식 문서 용어로 다시 그림</figcaption>
+      </figure>
+      <div class="callout info"><span class="h">여기서 말하는 '온톨로지'</span><p>OWL처럼 형식 언어로 개념을 하나하나 모델링하는 전통적인 온톨로지와는 다릅니다. 이미 있는 자산(메트릭 뷰·대시보드·쿼리 등)에서 <b>자동으로 학습한 지식</b>과, UC semantics로 <b>사람이 정의한 지식</b>을 합친 컨텍스트 레이어입니다. 처음부터 전부 모델링하지 않아도 바로 쓸 수 있습니다.</p></div>
+    </section>
+
+    <section id="knowledge">
+      <span class="sec-no">03</span>
+      <h2>두 종류의 지식: 학습된 지식과 모델링된 지식</h2>
+      <p>공식 문서의 표현을 빌리면 <b>"중요한 것은 모델링하고, 나머지는 Genie가 학습하게"</b> 하는 구조입니다.</p>
+      <div class="tbl-wrap">
+        <table class="t">
+          <thead><tr><th>구분</th><th>학습된 지식 (Learned knowledge)</th><th>모델링된 지식 (Modeled knowledge)</th></tr></thead>
+          <tbody>
+            <tr><td>만드는 주체</td><td>Genie가 자동으로 추출·유지</td><td>사람이 정의·관리·인증</td></tr>
+            <tr><td>원천</td><td>메트릭 뷰, 대시보드, SQL 쿼리(dbt 같은 외부 도구가 실행한 쿼리 포함), Genie Agents, 외부 지식 소스(Power BI, Beta)</td><td>UC semantics: 메트릭 뷰, 도메인(Domains), Pages, 인증·폐기. 큐레이션한 Genie Agents도 권위 있는 원천으로 취급</td></tr>
+            <tr><td>저장 형태</td><td><b>스니펫(snippet)</b>: 지표 정의, 권위 있는 원천, 비즈니스 규칙</td><td>UC 객체와 태그, Pages 문서</td></tr>
+            <tr><td>권위</td><td>출처·사용 빈도·최신성으로 <b>권위 점수</b>를 매김</td><td>학습된 지식보다 <b>우선</b></td></tr>
+            <tr><td>수정 방법</td><td>직접 편집 불가 → 원천 자산을 고치거나 모델링된 지식으로 정의</td><td>UC·Discover에서 직접 수정</td></tr>
+            <tr><td>권한</td><td>UC 권한으로 제한. 단 <b>외부 지식 소스 스니펫은 계정 전체 사용자</b>에게 보임</td><td>UC 권한 / 도메인 권한을 따름</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>스니펫은 이런 모습입니다</h3>
+      <div class="cards">
+        <div class="card"><div class="k">지표 정의</div><p>"'활성 사용자'는 모든 플랫폼에서 중복을 제거한 고유 사용자다."</p></div>
+        <div class="card"><div class="k">권위 있는 원천</div><p>"매출 질문은 큐레이션된 Finance Genie Agent로 답한다."</p></div>
+        <div class="card"><div class="k">비즈니스 규칙</div><p>"'적격 리드'는 데모가 예약된 뒤에만 센다."</p></div>
+      </div>
+      <p class="muted" style="font-size:14px">출처: 공식 문서 Genie Ontology의 예시를 옮김. Genie One 응답 아래 <b>Genie Ontology</b>를 누르면 사용된 스니펫의 설명·원천 자산·작성자·도메인·리니지를 볼 수 있습니다.</p>
+      <figure class="shot">
+        <img src="https://learn.microsoft.com/en-us/azure/databricks/_static/images/genie/genie-ontology-snippet-details.png" alt="Genie One 응답에서 Genie Ontology 스니펫을 선택해 설명, 원천 자산, 작성자, 도메인, 리니지를 보는 화면" loading="lazy">
+        <figcaption>Genie One 응답의 스니펫 상세 화면. 출처: <a href="https://learn.microsoft.com/en-us/azure/databricks/genie/genie-ontology/">Microsoft Learn · Genie Ontology</a></figcaption>
+      </figure>
+
+      <h3>충돌하면 누가 이기나</h3>
+      <p>Genie는 <b>인증 여부, 인기도, 작성자</b> 같은 신호로 원천의 권위를 판단합니다. 같은 주제라면 일반적으로 <b>모델링된 지식 · 인증된 자산 · 큐레이션된 Genie Agents</b>가 학습된 지식보다 우선합니다. 그래도 판단할 수 없으면 사용자에게 되묻습니다.</p>
+    </section>
+
+    <section id="how">
+      <span class="sec-no">04</span>
+      <h2>동작 방식</h2>
+      <p>원천에서 지식을 모아 두고, 질문이 들어오면 <b>권한을 적용해 관련 있는 지식만 골라</b> 에이전트의 추론에 넣습니다.</p>
+      <figure class="diagram">
+        <span class="swipe">← 좌우로 밀어서 보기 →</span>
+        <div class="scroll"><svg viewBox="0 0 1000 470" role="img" aria-label="Genie Ontology 동작 흐름: 원천에서 지식을 모으고, 질문 시점에 권한과 권위로 골라 각 에이전트에 제공">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5A6F77"/></marker>
+          </defs>
+          <style>
+            .lbl{font:700 15px 'Noto Sans KR',sans-serif;fill:#0B2026}
+            .cap{font:700 12px 'Noto Sans KR',sans-serif;fill:#E02E1B;letter-spacing:.06em}
+            .txt{font:400 14px 'Noto Sans KR',sans-serif;fill:#1B3139}
+            .sm{font:400 13px 'Noto Sans KR',sans-serif;fill:#5A6F77}
+            .w{fill:#fff;stroke:#E3E0DA}
+            .ln{stroke:#5A6F77;stroke-width:1.6;fill:none}
+          </style>
+          <!-- column captions -->
+          <text class="cap" x="20" y="26">① 원천</text>
+          <text class="cap" x="282" y="26">② GENIE ONTOLOGY</text>
+          <text class="cap" x="566" y="26">③ 질문 시점</text>
+          <text class="cap" x="826" y="26">④ 사용처</text>
+
+          <!-- sources -->
+          <rect class="w" x="20" y="42" width="220" height="176" rx="10"/>
+          <text class="lbl" x="36" y="68">Databricks 자산·사용 이력</text>
+          <text class="txt" x="36" y="94">· 메트릭 뷰 · 대시보드</text>
+          <text class="txt" x="36" y="116">· SQL 쿼리 (외부 도구 포함)</text>
+          <text class="txt" x="36" y="138">· Genie Agents</text>
+          <text class="txt" x="36" y="160">· UC semantics</text>
+          <text class="sm" x="36" y="184">도메인 · Pages · 인증·폐기</text>
+          <text class="sm" x="36" y="202">(모델링된 지식의 원천)</text>
+
+          <rect class="w" x="20" y="232" width="220" height="104" rx="10"/>
+          <text class="lbl" x="36" y="258">외부 지식 소스 <tspan class="sm">Beta</tspan></text>
+          <text class="txt" x="36" y="284">· Power BI 시맨틱 모델</text>
+          <text class="sm" x="36" y="306">측정값·계산 열·관계</text>
+          <text class="sm" x="36" y="324">→ 계정 전체 공개 스니펫</text>
+
+          <rect class="w" x="20" y="350" width="220" height="104" rx="10"/>
+          <text class="lbl" x="36" y="376">Genie Search</text>
+          <text class="txt" x="36" y="402">· Google Drive · Jira</text>
+          <text class="txt" x="36" y="424">· Confluence · Workday</text>
+          <text class="sm" x="36" y="444">원본 권한 그대로 · Genie One 전용</text>
+
+          <!-- ontology -->
+          <rect x="282" y="42" width="246" height="412" rx="12" fill="#FFEDE9" stroke="#FFD6CD"/>
+          <rect class="w" x="298" y="62" width="214" height="170" rx="10"/>
+          <text class="lbl" x="314" y="88">학습된 지식</text>
+          <text class="txt" x="314" y="114">스니펫 자동 추출·유지</text>
+          <text class="sm" x="314" y="138">지표 정의 · 권위 있는 원천</text>
+          <text class="sm" x="314" y="156">· 비즈니스 규칙</text>
+          <text class="txt" x="314" y="184">권위 점수</text>
+          <text class="sm" x="314" y="206">출처 · 사용 빈도 · 최신성</text>
+
+          <rect x="298" y="246" width="214" height="190" rx="10" fill="#fff" stroke="#FF3621" stroke-width="1.6"/>
+          <text class="lbl" x="314" y="272">모델링된 지식</text>
+          <text class="sm" x="430" y="272" fill="#E02E1B" style="fill:#E02E1B;font-weight:700">우선 적용</text>
+          <text class="txt" x="314" y="298">· 메트릭 뷰 (KPI)</text>
+          <text class="txt" x="314" y="320">· 도메인 · 서브도메인</text>
+          <text class="txt" x="314" y="342">· Pages (용어 정의)</text>
+          <text class="txt" x="314" y="364">· 인증 / 폐기 표시</text>
+          <text class="txt" x="314" y="386">· 큐레이션된 Genie Agents</text>
+          <text class="sm" x="314" y="414">UC 권한으로 거버넌스</text>
+
+          <!-- query time -->
+          <rect class="w" x="566" y="42" width="222" height="412" rx="12"/>
+          <text class="lbl" x="582" y="70">질문이 들어오면</text>
+          <circle cx="592" cy="110" r="12" fill="#0B2026"/><text x="592" y="115" text-anchor="middle" style="font:700 12px 'Noto Sans KR';fill:#fff">1</text>
+          <text class="txt" x="612" y="106">이 사용자가 볼 수 있는</text>
+          <text class="txt" x="612" y="125">지식만 후보로</text>
+          <circle cx="592" cy="180" r="12" fill="#0B2026"/><text x="592" y="185" text-anchor="middle" style="font:700 12px 'Noto Sans KR';fill:#fff">2</text>
+          <text class="txt" x="612" y="176">질문과의 관련성·권위로</text>
+          <text class="txt" x="612" y="195">순위 매기기</text>
+          <circle cx="592" cy="250" r="12" fill="#0B2026"/><text x="592" y="255" text-anchor="middle" style="font:700 12px 'Noto Sans KR';fill:#fff">3</text>
+          <text class="txt" x="612" y="246">충돌 해결</text>
+          <text class="sm" x="612" y="265">모델링·인증 우선,</text>
+          <text class="sm" x="612" y="283">판단 못 하면 되묻기</text>
+          <circle cx="592" cy="320" r="12" fill="#0B2026"/><text x="592" y="325" text-anchor="middle" style="font:700 12px 'Noto Sans KR';fill:#fff">4</text>
+          <text class="txt" x="612" y="316">골라낸 지식을</text>
+          <text class="txt" x="612" y="335">에이전트 추론에 주입</text>
+          <rect x="582" y="370" width="190" height="66" rx="8" fill="#F7F5F2"/>
+          <text class="sm" x="594" y="394">답변에 인용 표시</text>
+          <text class="sm" x="594" y="414">→ 어떤 스니펫·자산을</text>
+          <text class="sm" x="594" y="430">  썼는지 확인 가능</text>
+
+          <!-- consumers -->
+          <rect class="w" x="826" y="42" width="160" height="120" rx="10"/>
+          <text class="lbl" x="840" y="70">Genie One</text>
+          <text class="sm" x="840" y="94">업무 사용자 대화형 분석</text>
+          <text class="sm" x="840" y="114">Genie Search 내용까지</text>
+          <text class="sm" x="840" y="132">함께 사용</text>
+          <rect class="w" x="826" y="176" width="160" height="100" rx="10"/>
+          <text class="lbl" x="840" y="204">Genie Code</text>
+          <text class="sm" x="840" y="228">개발·분석 작업</text>
+          <text class="sm" x="840" y="248">Genie Search 내용은</text>
+          <text class="sm" x="840" y="266">쓰지 않음</text>
+          <rect class="w" x="826" y="290" width="160" height="164" rx="10"/>
+          <text class="lbl" x="840" y="318">외부 에이전트</text>
+          <text class="sm" x="840" y="342">Genie One MCP 서버</text>
+          <text class="sm" x="840" y="362">Claude · ChatGPT ·</text>
+          <text class="sm" x="840" y="380">Cursor · 자체 에이전트</text>
+          <text class="sm" x="840" y="404">같은 UC 권한 적용</text>
+
+          <!-- arrows -->
+          <path class="ln" d="M240 130 H282" marker-end="url(#ar)"/>
+          <path class="ln" d="M240 284 H282" marker-end="url(#ar)"/>
+          <path class="ln" d="M528 248 H566" marker-end="url(#ar)"/>
+          <path class="ln" d="M788 102 H826" marker-end="url(#ar)"/>
+          <path class="ln" d="M788 226 H826" marker-end="url(#ar)"/>
+          <path class="ln" d="M788 372 H826" marker-end="url(#ar)"/>
+          <path class="ln" d="M240 402 H282" marker-end="url(#ar)"/>
+        </svg></div>
+        <figcaption>공식 문서 Genie Ontology · Genie Search · Genie One MCP 설명을 바탕으로 다시 그림. Genie Search로 가져온 문서 내용은 Genie One에서만 쓰고 Genie Code는 쓰지 않음</figcaption>
+      </figure>
+      <p class="muted" style="font-size:14px">순위는 공식 블로그에서 "PageRank와 비슷한 방식"으로 소개됐습니다. 정의가 어디서 왔는지, 작성자의 상대적 권위, 얼마나 자주 쓰이는지, 인증되고 널리 쓰이는 자산과 얼마나 가까운지, 얼마나 최신인지를 따져 가중치를 줍니다.</p>
+    </section>
+
+    <section id="build">
+      <span class="sec-no">05</span>
+      <h2>구현 체크리스트</h2>
+      <p>Genie Ontology는 기본으로 켜져 있어 <b>별도 설치 없이 학습된 지식부터 동작</b>합니다. 구현은 "켜기"가 아니라 <b>무엇을 믿을지 알려 주는 작업</b>입니다. 체크 상태는 이 브라우저에만 저장됩니다.</p>
+      <p class="progress" id="progress"></p>
+
+      <div class="steps">
+        <div class="step">
+          <h4>사전 점검<span class="who">플랫폼 관리자</span></h4>
+          <label class="chk"><input type="checkbox" data-k="s0a"><span>Genie One을 쓸 수 있는 워크스페이스인지, 사용자에게 SQL 웨어하우스 권한이 있는지 확인</span></label>
+          <label class="chk"><input type="checkbox" data-k="s0b"><span>CMK(Customer-Managed Key, 고객 관리 키) 요건 확인: <b>온톨로지 스니펫과 Pages는 CMK를 지원하지 않음</b>(Databricks 관리 키로 암호화)</span></label>
+          <label class="chk"><input type="checkbox" data-k="s0c"><span>Pages 데이터는 여러 리전에 복제될 수 있으므로 <b>개인정보·규제 데이터는 Pages에 쓰지 않는다</b>는 작성 규칙 공지</span></label>
+          <label class="chk"><input type="checkbox" data-k="s0d"><span>규정 준수 보안 프로필(compliance security profile)을 쓰면 Pages 사용 가능 표준(HIPAA·PCI-DSS·C5·TISAX·HITRUST)인지, Discover 기능을 켰는지 확인</span></label>
+          <div class="ref">참고: <a href="https://docs.databricks.com/aws/en/genie/genie-ontology/">Genie Ontology</a> · <a href="https://docs.databricks.com/aws/en/uc-semantics/pages">Pages</a> · <a href="https://docs.databricks.com/aws/en/uc-semantics/domains">Domains</a></div>
+        </div>
+
+        <div class="step">
+          <h4>학습 재료 정리<span class="who">데이터 스튜어드</span></h4>
+          <label class="chk"><input type="checkbox" data-k="s1a"><span>오래된 자산과 실험용 자산은 <b>UC 권한으로 접근을 막아</b> 답변 후보에서 빼기 (Genie는 사용자가 볼 수 있는 자산에서 나온 스니펫만 씀)</span></label>
+          <label class="chk"><input type="checkbox" data-k="s1b"><span>남겨 둘 구 자산에는 <b>폐기(deprecated)</b> 표시 (→ 예시 ②)</span></label>
+          <div class="ref">스니펫을 만들려고 자산을 따로 만들 필요는 없습니다. 대시보드·Genie Agents를 만드는 평소 작업이 곧 학습 재료가 됩니다.</div>
+        </div>
+
+        <div class="step">
+          <h4>도메인 설계<span class="who">데이터 거버넌스 담당</span></h4>
+          <label class="chk"><input type="checkbox" data-k="s2a"><span>사업 단위·지역·기능으로 <b>도메인</b>을 나누고, governed tag로 자산을 묶기 (카탈로그·스키마에 태그하면 하위 자산에 상속)</span></label>
+          <label class="chk"><input type="checkbox" data-k="s2b"><span>필요하면 서브도메인(최대 5단계)으로 세분화, <code>MANAGE DOMAIN</code>을 도메인 담당자에게 위임</span></label>
+          <label class="chk"><input type="checkbox" data-k="s2c"><span>코드로 관리하려면 Terraform <code>databricks_domain</code> 리소스 사용</span></label>
+          <div class="ref">참고: <a href="https://docs.databricks.com/aws/en/uc-semantics/domains">Domains and subdomains</a></div>
+        </div>
+
+        <div class="step">
+          <h4>핵심 KPI를 메트릭 뷰로 정의<span class="who">분석 엔지니어</span></h4>
+          <label class="chk"><input type="checkbox" data-k="s3a"><span>"반드시 맞아야 하는" 지표(매출, 활성 고객 등) 10개 안팎을 먼저 고르기</span></label>
+          <label class="chk"><input type="checkbox" data-k="s3b"><span>메트릭 뷰로 정의하고 <code>display_name</code>·<code>synonyms</code>·<code>comment</code>를 채우기 (Genie가 동의어를 자연어 매칭에 사용) → 예시 ①</span></label>
+          <div class="ref">참고: <a href="https://docs.databricks.com/aws/en/uc-semantics/metric-views/">Metric views</a> · <a href="https://docs.databricks.com/aws/en/uc-semantics/agent-metadata">Agent metadata</a></div>
+        </div>
+
+        <div class="step">
+          <h4>용어를 Pages로 정의<span class="who">도메인 담당자</span></h4>
+          <label class="chk"><input type="checkbox" data-k="s4a"><span>Discover → Pages에서 용어·약어·엔터티 정의 작성. 문서가 많으면 Genie Code로 초안을 만들거나 일괄 가져오기</span></label>
+          <label class="chk"><input type="checkbox" data-k="s4b"><span><b>기본값은 모든 계정 사용자가 <code>MANAGE PAGES</code>를 가짐</b> → 게시 권한을 좁힐지 결정 (큐레이터만 변경 가능)</span></label>
+          <label class="chk"><input type="checkbox" data-k="s4c"><span>검토가 끝난 Page는 큐레이터가 인증. Genie One은 Page 정의를 학습된 지식보다 우선하고 답변에 인용</span></label>
+          <div class="ref">참고: <a href="https://docs.databricks.com/aws/en/uc-semantics/pages">Pages</a></div>
+        </div>
+
+        <div class="step">
+          <h4>믿을 자산 인증, 낡은 자산 폐기<span class="who">데이터 스튜어드</span></h4>
+          <label class="chk"><input type="checkbox" data-k="s5a"><span>공식 테이블·메트릭 뷰·대시보드·Genie Agents에 <b>인증(certified)</b> 표시 → 예시 ②</span></label>
+          <label class="chk"><input type="checkbox" data-k="s5b"><span>대체된 자산에는 <b>폐기(deprecated)</b> 표시와 함께 대체 자산을 COMMENT에 적기</span></label>
+          <div class="ref">참고: <a href="https://docs.databricks.com/aws/en/data-governance/unity-catalog/certify-deprecate-data">Flag data as certified or deprecated</a></div>
+        </div>
+
+        <div class="step">
+          <h4>Genie Agents 큐레이션<span class="who">도메인 담당자</span></h4>
+          <label class="chk"><input type="checkbox" data-k="s6a"><span>업무별 Genie Agent에 공식 데이터·지시·예시 질문을 정리하고 인증 (Genie는 큐레이션된 Genie Agents를 권위 있는 원천으로 우선)</span></label>
+          <div class="ref">참고: <a href="https://docs.databricks.com/aws/en/genie-agents/">Genie Agents</a></div>
+        </div>
+
+        <div class="step">
+          <h4>외부 지식으로 확장<span class="who">계정 관리자</span></h4>
+          <label class="chk"><input type="checkbox" data-k="s7a"><span><b>Genie Search</b>: 계정 콘솔 → Genie Ontology → Connect source에서 Google Drive·Jira Cloud·Confluence Cloud 연결. 계정의 모든 소스는 같은 데이터 보관 Geo를 써야 함</span></label>
+          <label class="chk"><input type="checkbox" data-k="s7b"><span><b>외부 지식 소스(Beta)</b>: Power BI 측정값·관계를 가져옴. 이 스니펫은 <b>계정 전체 사용자에게 보이므로</b> 대상 모델을 먼저 검토</span></label>
+          <label class="chk"><input type="checkbox" data-k="s7c"><span><b>Workday</b>를 사람 정보 소스로 연결해 Genie One 조직도 사용</span></label>
+          <div class="ref">참고: <a href="https://docs.databricks.com/aws/en/genie/genie-ontology/search-index">Genie Search index</a> · <a href="https://docs.databricks.com/aws/en/genie/genie-ontology/external-knowledge-sources/">External knowledge sources</a> · <a href="https://docs.databricks.com/aws/en/genie/genie-ontology/connect-people-source">Workday</a></div>
+        </div>
+
+        <div class="step">
+          <h4>외부 에이전트에 연결<span class="who">플랫폼 관리자</span></h4>
+          <label class="chk"><input type="checkbox" data-k="s8a"><span>사용자·서비스 주체에 <code>system.ai.genie_one_mcp</code> <code>EXECUTE</code> 권한 부여 → 예시 ③</span></label>
+          <label class="chk"><input type="checkbox" data-k="s8b"><span>Claude·ChatGPT·Cursor는 "Databricks Genie" 커넥터/플러그인으로, 그 밖의 MCP 클라이언트는 서버 URL로 연결</span></label>
+          <label class="chk"><input type="checkbox" data-k="s8c"><span>예전 Beta 엔드포인트(<code>/api/2.0/mcp/genie</code>)를 쓰고 있다면 <b>2026-11-30 종료 전에</b> GA 서버로 이전</span></label>
+          <div class="ref">참고: <a href="https://docs.databricks.com/aws/en/agents/mcp-tools/genie-mcp">Genie One MCP server</a></div>
+        </div>
+
+        <div class="step">
+          <h4>운영하며 다듬기<span class="who">데이터 스튜어드</span></h4>
+          <label class="chk"><input type="checkbox" data-k="s9a"><span>자주 묻는 질문으로 Genie One에 물어보고 <b>응답 인용</b>(어떤 스니펫·자산을 썼는지) 확인</span></label>
+          <label class="chk"><input type="checkbox" data-k="s9b"><span>틀린 정의가 쓰였다면 스니펫을 고치는 대신 <b>원천 자산을 수정</b>하거나 <b>모델링된 지식으로 정의</b></span></label>
+          <label class="chk"><input type="checkbox" data-k="s9c"><span>Pages 생성·수정·조회 이력은 감사 로그 <code>system.access.audit</code>의 <code>pages</code> 서비스로 추적</span></label>
+        </div>
+      </div>
+
+      <h3 id="ex-metric">예시 ① 핵심 KPI를 메트릭 뷰로</h3>
+      <p>정의를 한 곳에 두면 대시보드·Genie·SQL이 같은 숫자를 씁니다. 아래는 "매출 = 배송 완료 주문만"이라는 규칙을 메트릭 뷰에 넣은 예입니다. <code>samples.tpch</code>를 쓰므로 어느 워크스페이스에서나 실행할 수 있고, 실제 워크스페이스에서 실행해 확인했습니다.</p>
+      <div class="code"><span class="lang">SQL · YAML</span><button class="copy">복사</button><pre><span class="k">CREATE OR REPLACE VIEW</span> &lt;catalog&gt;.genie_ontology_lab.orders_metrics
+<span class="k">WITH METRICS</span>
+<span class="k">LANGUAGE YAML</span>
+<span class="k">AS</span> $$
+version: 1.1
+comment: 주문·매출 핵심 지표. 매출은 배송 완료(F) 주문만 집계한다.
+source: samples.tpch.orders
+joins:
+  - name: customer
+    source: samples.tpch.customer
+    on: source.o_custkey = customer.c_custkey
+fields:
+  - name: order_month
+    expr: DATE_TRUNC('MONTH', o_orderdate)
+    display_name: 주문 월
+    synonyms: ['월', 'order month']
+  - name: market_segment
+    expr: customer.c_mktsegment
+    display_name: 시장 세그먼트
+    synonyms: ['세그먼트', '고객군']
+  - name: order_status
+    expr: CASE o_orderstatus WHEN 'F' THEN '배송 완료' WHEN 'O' THEN '진행 중' ELSE '부분 배송' END
+    display_name: 주문 상태
+measures:
+  - name: order_count
+    expr: COUNT(1)
+    display_name: 주문 수
+  - name: recognized_revenue
+    expr: SUM(o_totalprice) FILTER (WHERE o_orderstatus = 'F')
+    display_name: 확정 매출
+    comment: 배송 완료(F) 주문의 금액 합계. 진행 중·부분 배송 주문은 제외한다.
+    synonyms: ['매출', '확정 매출', 'revenue']
+    format:
+      type: currency
+      currency_code: USD
+  - name: revenue_per_customer
+    expr: MEASURE(recognized_revenue) / COUNT(DISTINCT o_custkey)
+    display_name: 고객당 확정 매출
+$$;</pre></div>
+      <div class="code"><span class="lang">SQL</span><button class="copy">복사</button><pre><span class="c">-- Measures must be wrapped in MEASURE(); SELECT * is not allowed</span>
+<span class="k">SELECT</span> market_segment,
+       MEASURE(order_count)          <span class="k">AS</span> orders,
+       MEASURE(recognized_revenue)   <span class="k">AS</span> revenue,
+       MEASURE(revenue_per_customer) <span class="k">AS</span> revenue_per_customer
+<span class="k">FROM</span> &lt;catalog&gt;.genie_ontology_lab.orders_metrics
+<span class="k">WHERE</span> order_month <span class="k">BETWEEN</span> DATE<span class="s">'1995-01-01'</span> <span class="k">AND</span> DATE<span class="s">'1995-12-01'</span>
+<span class="k">GROUP BY ALL</span>
+<span class="k">ORDER BY</span> revenue <span class="k">DESC</span>;</pre></div>
+      <div class="callout info"><span class="h">요건과 문법 메모</span>
+        <ul class="spark">
+          <li>메트릭 뷰를 만들려면 원천에 <code>SELECT</code>, 대상 스키마에 <code>CREATE TABLE</code>·<code>USE SCHEMA</code>, 카탈로그에 <code>USE CATALOG</code> 권한이 필요합니다. 컴퓨트는 DBR(Databricks Runtime) 17.3 이상 또는 SQL 웨어하우스를 씁니다.</li>
+          <li><code>display_name</code>·<code>synonyms</code>·<code>format</code>은 YAML 사양 1.1부터 쓸 수 있습니다. 동의어는 항목마다 최대 10개입니다.</li>
+          <li><code>fields</code>가 현재 권장 키이고, 예전 <code>dimensions</code>도 계속 받아들입니다.</li>
+        </ul>
+      </div>
+
+      <h3 id="ex-cert">예시 ② 인증과 폐기</h3>
+      <p>인증은 시스템 태그 <code>system.certification_status</code> 하나로 표시합니다. 테이블·뷰·메트릭 뷰·볼륨·함수·모델·대시보드·Genie Agents·Apps·노트북·Pages에 붙일 수 있습니다.</p>
+      <div class="code"><span class="lang">SQL</span><button class="copy">복사</button><pre><span class="c">-- Mark the governed metric view as the trusted source</span>
+<span class="k">SET TAG ON TABLE</span> &lt;catalog&gt;.genie_ontology_lab.orders_metrics
+  `system.certification_status` = `certified`;
+
+<span class="c">-- Mark the legacy view as outdated and point to its replacement</span>
+<span class="k">SET TAG ON TABLE</span> &lt;catalog&gt;.genie_ontology_lab.orders_revenue_old
+  `system.certification_status` = `deprecated`;
+<span class="k">COMMENT ON TABLE</span> &lt;catalog&gt;.genie_ontology_lab.orders_revenue_old
+  <span class="k">IS</span> <span class="s">'구 매출 뷰(모든 상태 합산). orders_metrics를 사용할 것'</span>;
+
+<span class="c">-- Check the tags</span>
+<span class="k">SELECT</span> table_name, tag_name, tag_value
+<span class="k">FROM</span> &lt;catalog&gt;.information_schema.table_tags
+<span class="k">WHERE</span> schema_name = <span class="s">'genie_ontology_lab'</span>;</pre></div>
+      <p class="muted" style="font-size:14px">필요 권한: <code>system.certification_status</code> 태그의 <code>ASSIGN</code> 권한, 그리고 객체 소유자이거나 <code>APPLY TAG</code>·<code>USE SCHEMA</code>·<code>USE CATALOG</code> 권한. UI에서는 객체의 ⋮ 메뉴 → <b>Assign certification</b>으로 합니다.</p>
+
+      <h3 id="ex-mcp">예시 ③ 외부 에이전트에서 같은 온톨로지 쓰기</h3>
+      <p>Genie One MCP 서버에 연결하면 외부 에이전트도 같은 정의와 권한으로 답을 받습니다. 먼저 권한을 줍니다.</p>
+      <div class="code"><span class="lang">BASH</span><button class="copy">복사</button><pre><span class="c"># Grant EXECUTE on the Genie One MCP service (securable type: mcp_service)</span>
+databricks grants update mcp_service system.ai.genie_one_mcp \
+  --json '{"changes": [{"principal": "someone@example.com", "add": ["EXECUTE"]}]}'
+
+<span class="c"># Check effective permissions</span>
+databricks grants get-effective mcp_service system.ai.genie_one_mcp --principal someone@example.com</pre></div>
+      <p>호출자에게는 이 밖에 <code>system</code> 카탈로그의 <code>USE CATALOG</code>, <code>system.ai</code> 스키마의 <code>USE SCHEMA</code>, 그리고 워크스페이스 할당이 필요합니다. MCP 클라이언트에 넣을 서버 주소는 다음과 같습니다.</p>
+      <div class="code"><span class="lang">URL</span><button class="copy">복사</button><pre>https://&lt;workspace-hostname&gt;/ai-gateway/mcp-services/system.ai.genie_one_mcp?o=&lt;workspace-id&gt;</pre></div>
+      <p>Python에서는 MCP SDK와 Databricks SDK로 질문하고, 답이 나올 때까지 폴링합니다. 공식 문서 예시를 줄인 코드입니다.</p>
+      <div class="code"><span class="lang">PYTHON</span><button class="copy">복사</button><pre><span class="c"># pip install mcp databricks-sdk</span>
+<span class="k">import</span> asyncio
+<span class="k">from</span> databricks.sdk <span class="k">import</span> WorkspaceClient
+<span class="k">from</span> mcp.client.session <span class="k">import</span> ClientSession
+<span class="k">from</span> mcp.client.streamable_http <span class="k">import</span> streamablehttp_client
+
+w = WorkspaceClient()
+url = f<span class="s">"{w.config.host}/ai-gateway/mcp-services/system.ai.genie_one_mcp?o={w.get_workspace_id()}"</span>
+
+<span class="k">async def</span> ask(session, question):
+    state = (<span class="k">await</span> session.call_tool(<span class="s">"genie_ask"</span>, {<span class="s">"question"</span>: question})).structuredContent
+    <span class="c"># Poll until Genie finishes (completed, incomplete, or failed)</span>
+    <span class="k">while</span> state[<span class="s">"status"</span>] == <span class="s">"in_progress"</span>:
+        poll = <span class="k">await</span> session.call_tool(<span class="s">"genie_poll_response"</span>, {
+            <span class="s">"conversation_id"</span>: state[<span class="s">"conversation_id"</span>],
+            <span class="s">"response_id"</span>: state[<span class="s">"response_id"</span>],
+        })
+        state = poll.structuredContent
+    <span class="k">return</span> state
+
+<span class="k">async def</span> main():
+    <span class="k">async with</span> streamablehttp_client(url, headers=w.config.authenticate()) <span class="k">as</span> (read, write, _):
+        <span class="k">async with</span> ClientSession(read, write) <span class="k">as</span> session:
+            <span class="k">await</span> session.initialize()
+            answer = <span class="k">await</span> ask(session, <span class="s">"1995년 시장 세그먼트별 확정 매출을 알려줘"</span>)
+            print(answer[<span class="s">"status"</span>], answer.get(<span class="s">"final_answer"</span>))
+
+asyncio.run(main())</pre></div>
+      <div class="callout tip"><span class="h">사용자 대신 호출하기</span><p>공식 문서는 사용자 대신 호출(on-behalf-of user OAuth, <code>ai-gateway</code> 스코프)을 권장합니다. 그래야 답변이 그 사용자의 UC 권한 범위로 제한됩니다. 자동화 작업에는 서비스 주체 인증도 쓸 수 있습니다. 답변은 비동기라 폴링이 필요하고, 결과 표는 컨텍스트 보호를 위해 잘릴 수 있습니다(전체 결과는 <code>genie_get_query_result</code>).</p></div>
+    </section>
+
+    <section id="lab">
+      <span class="sec-no">06</span>
+      <h2>30분 실습: 인증한 지표를 Genie가 고르는지 확인하기</h2>
+      <p>예시 ①·②를 이어서 실행해 봅니다. <b>같은 '매출'을 계산하는 뷰 두 개</b>(새 메트릭 뷰, 구 뷰)를 만들고 하나는 인증, 하나는 폐기한 뒤 Genie One에 물어봅니다.</p>
+      <div class="callout info"><span class="h">준비물</span>
+        <ul class="spark">
+          <li>Genie One을 쓸 수 있는 워크스페이스와 SQL 웨어하우스(서버리스 권장)</li>
+          <li>실습용 스키마를 만들 수 있는 카탈로그 (아래 <code>&lt;catalog&gt;</code>를 바꿔 넣기)</li>
+          <li><code>system.certification_status</code> 태그 <code>ASSIGN</code> 권한 (워크스페이스 관리자라면 보통 있음)</li>
+        </ul>
+      </div>
+
+      <div class="lab-step">
+        <h4><span class="n">1</span>실습 스키마 만들기 <span class="tag-opt">1분</span></h4>
+        <div class="code"><span class="lang">SQL</span><button class="copy">복사</button><pre><span class="k">CREATE SCHEMA IF NOT EXISTS</span> &lt;catalog&gt;.genie_ontology_lab
+  <span class="k">COMMENT</span> <span class="s">'Genie Ontology hands-on lab'</span>;</pre></div>
+      </div>
+
+      <div class="lab-step">
+        <h4><span class="n">2</span>메트릭 뷰 만들고 조회하기 <span class="tag-opt">5분</span></h4>
+        <p><a href="#ex-metric">예시 ①</a>의 두 SQL을 차례로 실행합니다. 1995년 세그먼트 다섯 개의 확정 매출이 각각 약 65억 달러로 나오면 성공입니다.</p>
+        <div class="callout warn"><span class="h">기간을 1995년으로 잡은 이유</span><p><code>samples.tpch</code>의 최근 주문(1998년)은 대부분 배송 완료(F) 상태가 아니어서 확정 매출이 NULL로 나옵니다. 정의가 의도대로 동작한다는 뜻이지만, 처음 보면 오류로 오해하기 쉽습니다.</p></div>
+      </div>
+
+      <div class="lab-step">
+        <h4><span class="n">3</span>'경쟁하는' 구 뷰를 만들고 인증·폐기 표시하기 <span class="tag-opt">3분</span></h4>
+        <div class="code"><span class="lang">SQL</span><button class="copy">복사</button><pre><span class="c">-- Legacy view: sums every order status (the definition we want Genie to avoid)</span>
+<span class="k">CREATE OR REPLACE VIEW</span> &lt;catalog&gt;.genie_ontology_lab.orders_revenue_old <span class="k">AS</span>
+<span class="k">SELECT</span> o_orderdate, SUM(o_totalprice) <span class="k">AS</span> revenue
+<span class="k">FROM</span> samples.tpch.orders
+<span class="k">GROUP BY ALL</span>;</pre></div>
+        <p>이어서 <a href="#ex-cert">예시 ②</a>의 SQL로 <code>orders_metrics</code>는 인증, <code>orders_revenue_old</code>는 폐기 표시합니다. Catalog Explorer에서 두 객체에 체크 표시와 제한 아이콘이 보이면 됩니다.</p>
+      </div>
+
+      <div class="lab-step">
+        <h4><span class="n">4</span>Genie One에 물어보기 <span class="tag-opt">5분</span></h4>
+        <p>Genie One에서 이렇게 물어봅니다. 실습 자산이 워크스페이스의 다른 테이블과 섞이지 않도록 스키마를 질문에 넣습니다.</p>
+        <div class="code"><span class="lang">질문</span><button class="copy">복사</button><pre>&lt;catalog&gt;.genie_ontology_lab 기준으로 1995년 시장 세그먼트별 매출을 알려줘</pre></div>
+        <div class="result"><span class="h">실제로 실행해 본 결과 (2026-11-20, Azure Databricks)</span>
+          <ul class="spark">
+            <li>Genie가 <b>인증된 <code>orders_metrics</code></b>를 골라 <code>MEASURE(recognized_revenue)</code>로 집계했습니다. 2단계의 SQL 결과와 숫자가 같았습니다.</li>
+            <li>답변에서 "매출은 인증된 메트릭 뷰 기준이며 배송 완료(F) 주문만 합산"이라고 메트릭 뷰의 정의를 그대로 설명했습니다.</li>
+            <li><code>orders_revenue_old</code>는 "<b>사용 중단(deprecated)으로 표시돼 있어 쓰지 않았다</b>"고 이유를 밝히고 제외했습니다.</li>
+            <li>Genie의 생각 단계에 온톨로지 검색이 있었지만, <b>막 만든 자산이라 쓸 만한 스니펫은 아직 없었습니다</b>. 이번 답은 메트릭 뷰의 정의(모델링된 지식)와 인증 표시로 만들어졌습니다.</li>
+          </ul>
+        </div>
+        <p>응답의 인용 아이콘과 그 아래 <b>Genie Ontology</b>를 눌러 어떤 자산과 지식이 쓰였는지 확인해 보세요. 자산을 실제로 쓰다 보면 학습된 스니펫이 생깁니다. 며칠 뒤 같은 질문을 다시 하면 스니펫 인용이 붙는지 볼 수 있습니다.</p>
+      </div>
+
+      <div class="lab-step">
+        <h4><span class="n">5</span>Page로 용어 정의 더하기 <span class="tag-opt">선택 · UI · 10분</span></h4>
+        <p>Discover → <b>Pages</b> → <b>Create page</b>에서 도메인을 고르고 "확정 매출" Page를 만듭니다. 동의어("매출", "인식 매출"), 정의("배송 완료 주문 금액의 합계, 진행 중·부분 배송 제외"), 관련 자산(<code>orders_metrics</code>)을 넣고 게시합니다. 그런 다음 스키마 이름 없이 <b>"확정 매출이 뭐야? 1995년 기준으로 보여줘"</b>라고 물어 Page 인용이 붙는지 봅니다.</p>
+        <div class="callout warn"><span class="h">이 단계는 직접 실행하지 않았습니다</span><p>도메인과 Pages는 <b>계정 단위 객체</b>라서 같은 계정의 모든 워크스페이스에 보입니다. 공용 계정에서는 실습용으로 만들지 말고, 정리 계획을 세운 뒤 진행하세요. 위 절차는 공식 문서 기준입니다.</p></div>
+      </div>
+
+      <div class="lab-step">
+        <h4><span class="n">6</span>외부 에이전트로 같은 질문하기 <span class="tag-opt">선택 · 5분</span></h4>
+        <p><a href="#ex-mcp">예시 ③</a>의 Python 코드로 같은 질문을 보냅니다. 같은 메트릭 뷰를 근거로 한 답이 오는지, 응답의 <code>query_items</code>에 담긴 SQL이 <code>orders_metrics</code>를 쓰는지 확인합니다.</p>
+      </div>
+
+      <div class="lab-step">
+        <h4><span class="n">7</span>정리 <span class="tag-opt">1분</span></h4>
+        <div class="code"><span class="lang">SQL</span><button class="copy">복사</button><pre><span class="k">DROP SCHEMA IF EXISTS</span> &lt;catalog&gt;.genie_ontology_lab <span class="k">CASCADE</span>;</pre></div>
+        <p class="muted" style="font-size:14px">5단계에서 Page를 만들었다면 Discover에서 직접 삭제합니다.</p>
+      </div>
+    </section>
+
+    <section id="status">
+      <span class="sec-no">07</span>
+      <h2>기능별 상태 (기준일 2026-11-20)</h2>
+      <p>AWS 문서와 Azure Learn 릴리스 노트에서 상태와 날짜가 같습니다. 상태는 바뀔 수 있으니 도입 시점에 다시 확인하세요.</p>
+      <div class="tbl-wrap">
+        <table class="t status">
+          <thead><tr><th>기능</th><th>상태</th><th>날짜</th><th>메모</th></tr></thead>
+          <tbody>
+            <tr><td>Genie Ontology</td><td><span class="pill ga">GA</span></td><td>2026-11-09</td><td>2026-08-06부터 기본 ON. 스니펫 생성은 현재 과금 없음(변경 가능)</td></tr>
+            <tr><td>Genie Search</td><td><span class="pill ga">GA</span></td><td>2026-11-09</td><td>Google Drive·Jira·Confluence·Workday. 현재 과금 없음(변경 가능)</td></tr>
+            <tr><td>Pages</td><td><span class="pill ga">GA</span></td><td>2026-11-11</td><td><code>MANAGE PAGES</code> 권한, REST API</td></tr>
+            <tr><td>Discover · Domains</td><td><span class="pill ga">GA</span></td><td>2026-10-08</td><td>Domains REST API는 Beta 표기</td></tr>
+            <tr><td>메트릭 뷰 파라미터</td><td><span class="pill ga">GA</span></td><td>2026-11-13</td><td>윈도 측정값 GA(2026-10-06)</td></tr>
+            <tr><td>메트릭 뷰 간 관계</td><td><span class="pill beta">Beta</span></td><td>2026-10-30</td><td>여러 팩트에 걸친 측정값</td></tr>
+            <tr><td>외부 지식 소스</td><td><span class="pill beta">Beta</span></td><td>2026-11-05</td><td>Power BI만. 계정 콘솔 Previews에서 켬</td></tr>
+            <tr><td>Genie One MCP 서버</td><td><span class="pill ga">GA</span></td><td>—</td><td><code>system.ai.genie_one_mcp</code>. 기본 OAuth 앱으로 Claude·ChatGPT·Cursor 등 연결(2026-10-27)</td></tr>
+            <tr><td>구 Genie MCP 엔드포인트</td><td><span class="pill eol">종료 예정</span></td><td>2026-11-30</td><td><code>/api/2.0/mcp/genie</code> → GA 서버로 이전</td></tr>
+            <tr><td>Microsoft 365 Copilot용 Genie 플러그인</td><td><span class="pill pp">Public Preview</span></td><td>2026-11-11</td><td>Azure Databricks</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted" style="font-size:14px">참고: <a href="#refs">08 참고 문서</a>의 릴리스 노트(AWS · Azure)</p>
+    </section>
+
+    <section id="refs">
+      <span class="sec-no">08</span>
+      <h2>참고 문서와 용어</h2>
+      <div class="refs">
+        <div class="grp"><h4>Genie Ontology</h4><ul>
+          <li>Genie Ontology <span class="cl">(<a href="https://docs.databricks.com/aws/en/genie/genie-ontology/">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/genie/genie-ontology/">Azure</a>)</span></li>
+          <li>Genie Search index <span class="cl">(<a href="https://docs.databricks.com/aws/en/genie/genie-ontology/search-index">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/genie/genie-ontology/search-index">Azure</a>)</span></li>
+          <li>External knowledge sources <span class="pill beta">Beta</span> <span class="cl">(<a href="https://docs.databricks.com/aws/en/genie/genie-ontology/external-knowledge-sources/">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/genie/genie-ontology/external-knowledge-sources/">Azure</a>)</span></li>
+          <li>Connect Workday people source <span class="cl">(<a href="https://docs.databricks.com/aws/en/genie/genie-ontology/connect-people-source">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/genie/genie-ontology/connect-people-source">Azure</a>)</span></li>
+          <li>블로그: Introducing Genie One, Genie Agents, and Genie Ontology <span class="cl">(<a href="https://www.databricks.com/blog/introducing-genie-one-genie-ontology-and-genie-agents">databricks.com</a>)</span></li>
+        </ul></div>
+        <div class="grp"><h4>Unity Catalog semantics</h4><ul>
+          <li>Unity Catalog semantics 개요 <span class="cl">(<a href="https://docs.databricks.com/aws/en/uc-semantics/">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/uc-semantics/">Azure</a>)</span></li>
+          <li>Metric views <span class="cl">(<a href="https://docs.databricks.com/aws/en/uc-semantics/metric-views/">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/uc-semantics/metric-views/">Azure</a>)</span></li>
+          <li>Metric view YAML reference <span class="cl">(<a href="https://docs.databricks.com/aws/en/uc-semantics/metric-views/yaml-reference">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/uc-semantics/metric-views/yaml-reference">Azure</a>)</span></li>
+          <li>Agent metadata (동의어·표시 이름) <span class="cl">(<a href="https://docs.databricks.com/aws/en/uc-semantics/agent-metadata">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/uc-semantics/agent-metadata">Azure</a>)</span></li>
+          <li>Domains and subdomains <span class="cl">(<a href="https://docs.databricks.com/aws/en/uc-semantics/domains">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/uc-semantics/domains">Azure</a>)</span></li>
+          <li>Pages <span class="cl">(<a href="https://docs.databricks.com/aws/en/uc-semantics/pages">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/uc-semantics/pages">Azure</a>)</span></li>
+          <li>Certify or deprecate data <span class="cl">(<a href="https://docs.databricks.com/aws/en/data-governance/unity-catalog/certify-deprecate-data">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/certify-deprecate-data">Azure</a>)</span></li>
+        </ul></div>
+        <div class="grp"><h4>Genie와 연결</h4><ul>
+          <li>Genie One <span class="cl">(<a href="https://docs.databricks.com/aws/en/genie-one/">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/genie-one/">Azure</a>)</span></li>
+          <li>Genie Code <span class="cl">(<a href="https://docs.databricks.com/aws/en/genie-code/">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/genie-code/">Azure</a>)</span></li>
+          <li>Genie Agents <span class="cl">(<a href="https://docs.databricks.com/aws/en/genie-agents/">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/genie-agents/">Azure</a>)</span></li>
+          <li>Genie One MCP server <span class="cl">(<a href="https://docs.databricks.com/aws/en/agents/mcp-tools/genie-mcp">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/agents/mcp-tools/genie-mcp">Azure</a>)</span></li>
+          <li>Genie pricing <span class="cl">(<a href="https://www.databricks.com/product/pricing/genie">databricks.com</a>)</span></li>
+        </ul></div>
+        <div class="grp"><h4>릴리스 노트</h4><ul>
+          <li>플랫폼 릴리스 노트 2026-11 <span class="cl">(<a href="https://docs.databricks.com/aws/en/release-notes/product/2026/november">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/release-notes/product/2026/november">Azure</a>)</span></li>
+          <li>플랫폼 릴리스 노트 2026-10 <span class="cl">(<a href="https://docs.databricks.com/aws/en/release-notes/product/2026/october">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/release-notes/product/2026/october">Azure</a>)</span></li>
+          <li>AI/BI · Genie One 릴리스 노트 2026 <span class="cl">(<a href="https://docs.databricks.com/aws/en/ai-bi/release-notes/2026">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/ai-bi/release-notes/2026">Azure</a>)</span></li>
+        </ul></div>
+        <div class="grp"><h4>용어</h4>
+          <dl class="glossary">
+            <dt>스니펫 (snippet)</dt><dd>Genie가 자산에서 뽑아 낸 비즈니스 지식의 단위. 지표 정의·권위 있는 원천·규칙 등</dd>
+            <dt>메트릭 뷰 (metric view)</dt><dd>측정값과 차원을 YAML로 한 번 정의해 재사용하는 UC 객체. 그룹화는 조회 시점에 결정</dd>
+            <dt>도메인 (domain)</dt><dd>자산을 사업 기준으로 묶는 계층. governed tag로 구성하고 Discover에서 탐색</dd>
+            <dt>Pages</dt><dd>도메인별로 관리하는 공식 용어 정의 문서. 사람과 Genie One이 함께 참조</dd>
+            <dt>MCP</dt><dd>Model Context Protocol. 에이전트가 외부 도구·데이터에 접속하는 표준 규약</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>Databricks 공식 문서·릴리스 노트·공개 블로그를 바탕으로 정리한 한글 자료입니다(기준일 2026-11-20). 제품 이름과 상태는 원문을 따릅니다. 실습 결과는 작성 시점에 한 워크스페이스에서 실행한 것이라 환경에 따라 다를 수 있습니다.</p>
+      <p>Databricks, Genie, Unity Catalog는 Databricks, Inc.의 상표입니다.</p>
+    </footer>
+  </main>
+</div>
+
+<script>
+  // Copy buttons for code blocks
+  document.querySelectorAll('.code button.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.parentElement.querySelector('pre').innerText;
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = '복사됨';
+        setTimeout(function () { btn.textContent = '복사'; }, 1400);
+      });
+    });
+  });
+
+  // Checklist state persisted in localStorage
+  var KEY = 'genie-ontology-checklist';
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { saved = {}; }
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.step input[type=checkbox]'));
+  function renderProgress() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById('progress').innerHTML = '진행: <b>' + done + '</b> / ' + boxes.length + '개 항목';
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.dataset.k];
+    b.addEventListener('change', function () {
+      saved[b.dataset.k] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      renderProgress();
+    });
+  });
+  renderProgress();
+
+  // Highlight the current section in the TOC
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var targets = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  function onScroll() {
+    var y = window.scrollY + 120, idx = 0;
+    targets.forEach(function (t, i) { if (t && t.getBoundingClientRect().top + window.scrollY <= y) idx = i; });
+    links.forEach(function (a, i) { a.classList.toggle('active', i === idx); });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Keyboard navigation between sections (ArrowDown/ArrowUp with Alt, or J/K)
+  var secs = Array.prototype.slice.call(document.querySelectorAll('main section'));
+  document.addEventListener('keydown', function (e) {
+    if (/INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    var cur = secs.findIndex(function (s) { return s.getBoundingClientRect().top > 10; });
+    if (cur < 0) cur = secs.length;
+    if (e.key === 'j') { var n = secs[Math.min(cur, secs.length - 1)]; if (n) n.scrollIntoView(); }
+    if (e.key === 'k') { var p = secs[Math.max(cur - 2, 0)]; if (p) p.scrollIntoView(); }
+  });
+</script>
+</body>
+</html>
