@@ -194,6 +194,7 @@
       <li><a href="#summary">한눈에 보기</a></li>
       <li><a href="#why">01 왜 온톨로지인가</a></li>
       <li><a href="#what">02 Genie Ontology란</a></li>
+      <li class="sub"><a href="#ontobricks">참고: OntoBricks</a></li>
       <li><a href="#knowledge">03 두 종류의 지식</a></li>
       <li><a href="#how">04 동작 방식</a></li>
       <li><a href="#build">05 구현 체크리스트</a></li>
@@ -202,6 +203,7 @@
       <li class="sub"><a href="#ex-mcp">예시 ③ 외부 에이전트 연결</a></li>
       <li><a href="#lab">06 30분 실습</a></li>
       <li><a href="#status">07 기능별 상태</a></li>
+      <li class="sub"><a href="#upcoming">준비 중인 기능</a></li>
       <li><a href="#refs">08 참고 문서·용어</a></li>
     </ol>
     <div class="toc-foot">기준일 2026-11-20<br>공식 문서 기준 한글 정리</div>
@@ -214,7 +216,7 @@
       <h1>Databricks <span class="accent">Genie Ontology</span></h1>
       <p class="lead">AI 에이전트가 테이블 이름이 아니라 <b>회사의 비즈니스 언어</b>로 답하게 만드는 컨텍스트 레이어. 무엇이고 어떻게 동작하는지, 그리고 무엇부터 준비하면 되는지 정리했습니다.</p>
       <div class="meta">
-        <span>기준일 2026-11-20</span>
+        <span>기준일 2026-11-20 (2026-11-25 보완)</span>
         <span>AWS · Azure 공식 문서와 릴리스 노트 기준</span>
         <span>대상: 데이터 스튜어드 · 분석/AI 플랫폼 담당자</span>
       </div>
@@ -367,7 +369,37 @@
         </svg></div>
         <figcaption>Genie Ontology의 구성. Databricks의 Genie Ontology 소개 자료 구조를 공식 문서 용어로 다시 그림</figcaption>
       </figure>
-      <div class="callout info"><span class="h">여기서 말하는 '온톨로지'</span><p>OWL처럼 형식 언어로 개념을 하나하나 모델링하는 전통적인 온톨로지와는 다릅니다. 이미 있는 자산(메트릭 뷰·대시보드·쿼리 등)에서 <b>자동으로 학습한 지식</b>과, UC semantics로 <b>사람이 정의한 지식</b>을 합친 컨텍스트 레이어입니다. 처음부터 전부 모델링하지 않아도 바로 쓸 수 있습니다.</p></div>
+      <div class="callout info"><span class="h">여기서 말하는 '온톨로지'</span><p>OWL처럼 형식 언어로 개념을 하나하나 모델링하는 전통적인 온톨로지와는 다릅니다. 이미 있는 자산(메트릭 뷰·대시보드·쿼리 등)에서 <b>자동으로 학습한 지식</b>과, UC semantics로 <b>사람이 정의한 지식</b>을 합친 컨텍스트 레이어입니다. 처음부터 전부 모델링하지 않아도 바로 쓸 수 있습니다. OWL 기반 온톨로지가 필요한 경우는 아래 <a href="#ontobricks">참고: OntoBricks</a>를 보세요.</p></div>
+
+      <h3 id="ontobricks">참고: OWL 기반 온톨로지를 직접 구축한다면 (OntoBricks)</h3>
+      <p>형식 온톨로지와 지식 그래프가 필요해서 <a href="https://github.com/databrickslabs/ontobricks">OntoBricks</a>를 직접 구축하는 경우도 있습니다. OntoBricks는 Databricks Labs에 공개된 프로젝트로, Unity Catalog 테이블을 OWL(Web Ontology Language, 웹 온톨로지 언어) 온톨로지와 지식 그래프로 만드는 Databricks App입니다. <b>Genie Ontology의 구성 요소가 아닌 별도 프로젝트</b>이고 푸는 문제도 다릅니다.</p>
+      <div class="tbl-wrap">
+        <table class="t">
+          <thead><tr><th>구분</th><th>Genie Ontology</th><th>OntoBricks</th></tr></thead>
+          <tbody>
+            <tr><td>성격</td><td>Databricks 제품 기능. GA이고 기본으로 켜져 있음</td><td>Databricks Labs 프로젝트(2026-11 기준 v0.9.3). 워크스페이스에 Databricks App으로 직접 배포</td></tr>
+            <tr><td>온톨로지의 형태</td><td>학습된 스니펫과 UC semantics(메트릭 뷰·도메인·Pages·인증)</td><td>OWL 클래스·관계·속성, 테이블과 잇는 R2RML(관계형 데이터를 RDF로 매핑하는 W3C 표준) 매핑, 트리플로 만든 지식 그래프</td></tr>
+            <tr><td>만드는 방식</td><td>기존 자산에서 자동 학습하고, 정확해야 하는 정의만 사람이 모델링</td><td>UC 메타데이터를 읽어 LLM이 온톨로지 초안과 SQL 매핑을 만들고 사람이 검토. 화면에서 직접 설계하거나 FIBO·HL7 FHIR 같은 표준 온톨로지를 가져올 수도 있음</td></tr>
+            <tr><td>추론·검증</td><td>권위 순위로 질문에 맞는 컨텍스트를 고름 (→ <a href="#how">04 동작 방식</a>)</td><td>OWL 2 RL 추론, SWRL 규칙, SHACL(Shapes Constraint Language, 데이터 형태 검증 규칙) 검사</td></tr>
+            <tr><td>쓰는 곳</td><td>Genie One·Genie Code, Genie One MCP 서버로 외부 에이전트</td><td>그래프 탐색 화면, SPARQL(RDF 질의 언어)·GraphQL, 도메인별 MCP 게시</td></tr>
+            <tr><td>필요한 것</td><td>별도 설치 없음</td><td>Databricks Apps, SQL 웨어하우스, Lakebase Autoscaling(Provisioned는 지원하지 않음), LLM 엔드포인트(리포 표기로 AI Gateway 또는 Model Serving). 그래프 저장소는 도메인별로 Lakebase(기본)·Delta 테이블·Neo4j 중 선택</td></tr>
+            <tr><td>지원</td><td>정식 제품 기능</td><td>SLA(Service Level Agreement, 서비스 수준 협약) 없이 있는 그대로 제공. 문의는 GitHub Issues</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="spark">
+        <li><b>Genie가 회사 용어와 지표로 정확히 답하게 하는 것</b>이 목적이면 Genie Ontology로 충분합니다. <a href="#build">05 구현 체크리스트</a>부터 진행하세요.</li>
+        <li><b>엔터티 사이의 관계를 그래프로 탐색·추론</b>해야 하거나 FIBO·HL7 FHIR 같은 <b>산업 표준 온톨로지</b>에 맞춰야 하면 OntoBricks 같은 형식 온톨로지 도구가 맞습니다.</li>
+        <li><b>함께 쓸 때</b>: OntoBricks 문서에는 MCP 앱을 Unity Catalog HTTP 연결로 등록해 Genie One 대화에 도구로 붙이는 <a href="https://github.com/databrickslabs/ontobricks/blob/master/docs/mcp.md#register-the-mcp-in-unity-catalog-and-genie-one">절차</a>가 있습니다. 이렇게 붙이면 Genie가 대화 중에 OntoBricks 도구를 호출합니다. 다만 공식 문서가 꼽는 학습된 지식의 원천(메트릭 뷰·대시보드·쿼리·Genie Agents·외부 지식 소스)에 OntoBricks 그래프는 없습니다. 지표 정의의 정본은 메트릭 뷰와 Pages에 두기를 권합니다. OntoBricks는 메트릭 뷰를 데이터 자산으로 가져와 클래스에 연결할 수 있습니다.</li>
+      </ul>
+      <div class="callout warn"><span class="h">직접 구축하기 전에 확인할 것</span>
+        <ul>
+          <li>Databricks Labs 프로젝트는 Databricks의 공식 지원 대상이 아닙니다. 문제가 생기면 지원 티켓이 아니라 GitHub Issues에 올리고, 답변 기한은 없습니다.</li>
+          <li>라이선스는 Databricks License입니다. Databricks 서비스를 이용하는 범위 안에서만 쓸 수 있습니다.</li>
+          <li>아직 1.0 이전(0.9.x)이라 릴리스 사이에 동작이 바뀔 수 있습니다. 배포, 업그레이드, 권한 설정과 Lakebase·SQL 웨어하우스·LLM 사용 비용은 구축한 쪽이 맡습니다.</li>
+        </ul>
+      </div>
+      <p class="muted" style="font-size:14px">출처: OntoBricks 리포의 README, Get Started, MCP 문서, LICENSE (v0.9.3, 2026-11-25 확인)</p>
     </section>
 
     <section id="knowledge">
@@ -520,7 +552,7 @@
         </svg></div>
         <figcaption>공식 문서 Genie Ontology · Genie Search · Genie One MCP 설명을 바탕으로 다시 그림. Genie Search로 가져온 문서 내용은 Genie One에서만 쓰고 Genie Code는 쓰지 않음</figcaption>
       </figure>
-      <p class="muted" style="font-size:14px">순위는 공식 블로그에서 "PageRank와 비슷한 방식"으로 소개됐습니다. 정의가 어디서 왔는지, 작성자의 상대적 권위, 얼마나 자주 쓰이는지, 인증되고 널리 쓰이는 자산과 얼마나 가까운지, 얼마나 최신인지를 따져 가중치를 줍니다.</p>
+      <p class="muted" style="font-size:14px">공식 블로그는 이 순위 알고리즘을 <b>OntoRank</b>라고 부르고 "PageRank와 비슷한 방식"이라고 소개합니다. 정의가 어디서 왔는지, 작성자의 상대적 권위, 얼마나 자주 쓰이는지, 인증되고 널리 쓰이는 자산과 얼마나 가까운지, 얼마나 최신인지를 따져 가중치를 줍니다. <a href="https://www.databricks.com/blog/announcing-ga-genie-ontology">GA 발표 블로그</a>에 따르면 Genie Search로 색인한 문서와 조직 디렉터리(Workday)의 팀 관계도 이 판단에 반영됩니다. 공식 문서는 OntoRank라는 이름 없이 "권위 점수(authority score)"로 설명하고, 신호별 가중치는 공개 자료에 나와 있지 않습니다.</p>
     </section>
 
     <section id="build">
@@ -762,7 +794,7 @@ asyncio.run(main())</pre></div>
         <h4><span class="n">4</span>Genie One에 물어보기 <span class="tag-opt">5분</span></h4>
         <p>Genie One에서 이렇게 물어봅니다. 실습 자산이 워크스페이스의 다른 테이블과 섞이지 않도록 스키마를 질문에 넣습니다.</p>
         <div class="code"><span class="lang">질문</span><button class="copy">복사</button><pre>&lt;catalog&gt;.genie_ontology_lab 기준으로 1995년 시장 세그먼트별 매출을 알려줘</pre></div>
-        <div class="result"><span class="h">실제로 실행해 본 결과 (2026-11-20, Azure Databricks)</span>
+        <div class="result"><span class="h">실제로 실행해 본 결과 (2026-11-20)</span>
           <ul class="spark">
             <li>Genie가 <b>인증된 <code>orders_metrics</code></b>를 골라 <code>MEASURE(recognized_revenue)</code>로 집계했습니다. 2단계의 SQL 결과와 숫자가 같았습니다.</li>
             <li>답변에서 "매출은 인증된 메트릭 뷰 기준이며 배송 완료(F) 주문만 합산"이라고 메트릭 뷰의 정의를 그대로 설명했습니다.</li>
@@ -800,7 +832,7 @@ asyncio.run(main())</pre></div>
           <thead><tr><th>기능</th><th>상태</th><th>날짜</th><th>메모</th></tr></thead>
           <tbody>
             <tr><td>Genie Ontology</td><td><span class="pill ga">GA</span></td><td>2026-11-09</td><td>2026-08-06부터 기본 ON. 스니펫 생성은 현재 과금 없음(변경 가능)</td></tr>
-            <tr><td>Genie Search</td><td><span class="pill ga">GA</span></td><td>2026-11-09</td><td>Google Drive·Jira·Confluence·Workday. 현재 과금 없음(변경 가능)</td></tr>
+            <tr><td>Genie Search</td><td><span class="pill ga">GA</span></td><td>2026-11-09</td><td>Google Drive·Jira·Confluence·Workday, SharePoint는 Beta. 현재 과금 없음(변경 가능)</td></tr>
             <tr><td>Pages</td><td><span class="pill ga">GA</span></td><td>2026-11-11</td><td><code>MANAGE PAGES</code> 권한, REST API</td></tr>
             <tr><td>Discover · Domains</td><td><span class="pill ga">GA</span></td><td>2026-10-08</td><td>Domains REST API는 Beta 표기</td></tr>
             <tr><td>메트릭 뷰 파라미터</td><td><span class="pill ga">GA</span></td><td>2026-11-13</td><td>윈도 측정값 GA(2026-10-06)</td></tr>
@@ -813,6 +845,20 @@ asyncio.run(main())</pre></div>
         </table>
       </div>
       <p class="muted" style="font-size:14px">참고: <a href="#refs">08 참고 문서</a>의 릴리스 노트(AWS · Azure)</p>
+
+      <h3 id="upcoming">준비 중인 기능 (GA 발표 블로그 예고)</h3>
+      <p><a href="https://www.databricks.com/blog/announcing-ga-genie-ontology">GA 발표 블로그</a>(2026-11-11)가 예고한 기능입니다. 출시 일정은 공개되지 않았고, 2026-11-25 기준 공식 문서와 릴리스 노트에는 아직 없습니다. 이름과 범위는 출시 때 달라질 수 있습니다.</p>
+      <div class="tbl-wrap">
+        <table class="t">
+          <thead><tr><th>기능</th><th>블로그의 표현</th><th>예고된 내용</th></tr></thead>
+          <tbody>
+            <tr><td>Ontology Manager</td><td>"coming soon in Beta"</td><td>온톨로지를 살펴보고 큐레이션하는 첫 시각 화면. 데이터 스튜어드는 온톨로지 상태를 점검하고, 공백이 큰 곳을 찾고, 최상위 도메인 구조와 외부 지식 소스를 설정. 도메인 전문가는 자기 영역의 지식을 정리. 정의가 없는데 자주 묻는 개념을 찾아 주고, 검토 대기열에서 학습된 지식을 Page로 승격. 엔터티와 관계를 탐색하는 그래프 보기와 도메인별 계층 보기 제공 (<a href="https://www.databricks.com/resources/demos/videos/genie-ontology">데모 영상</a>)</td></tr>
+            <tr><td>외부 지식 소스 확대</td><td>"coming soon"</td><td>Power BI에 이어 Tableau와 Sigma의 시맨틱 모델에서도 스니펫 생성. 리니지 지원은 그다음 순서("will follow")</td></tr>
+            <tr><td>Genie Search 커넥터</td><td>"many more connectors coming soon"</td><td>지금의 Google Drive·Jira·Confluence·Workday·SharePoint(Beta) 외에 연결할 수 있는 소스 추가</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Ontology Manager가 다루는 대상은 도메인 구조와 Pages입니다.<a href="#build">05 구현 체크리스트</a>의 도메인 설계와 Pages 작성은 지금 해 둘 수 있습니다.</p>
     </section>
 
     <section id="refs">
@@ -825,6 +871,12 @@ asyncio.run(main())</pre></div>
           <li>External knowledge sources <span class="pill beta">Beta</span> <span class="cl">(<a href="https://docs.databricks.com/aws/en/genie/genie-ontology/external-knowledge-sources/">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/genie/genie-ontology/external-knowledge-sources/">Azure</a>)</span></li>
           <li>Connect Workday people source <span class="cl">(<a href="https://docs.databricks.com/aws/en/genie/genie-ontology/connect-people-source">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/genie/genie-ontology/connect-people-source">Azure</a>)</span></li>
           <li>블로그: Introducing Genie One, Genie Agents, and Genie Ontology <span class="cl">(<a href="https://www.databricks.com/blog/introducing-genie-one-genie-ontology-and-genie-agents">databricks.com</a>)</span></li>
+          <li>블로그: Announcing GA of Genie Ontology <span class="cl">(<a href="https://www.databricks.com/blog/announcing-ga-genie-ontology">databricks.com</a>)</span></li>
+        </ul></div>
+        <div class="grp"><h4>OntoBricks (Databricks Labs, 공식 지원 없음)</h4><ul>
+          <li>리포와 README <span class="cl">(<a href="https://github.com/databrickslabs/ontobricks">github.com</a>)</span></li>
+          <li>Get Started: 사전 요건과 배포 <span class="cl">(<a href="https://github.com/databrickslabs/ontobricks/blob/master/docs/getting-started.md">github.com</a>)</span></li>
+          <li>MCP Integration: Genie One 연결 <span class="cl">(<a href="https://github.com/databrickslabs/ontobricks/blob/master/docs/mcp.md">github.com</a>)</span></li>
         </ul></div>
         <div class="grp"><h4>Unity Catalog semantics</h4><ul>
           <li>Unity Catalog semantics 개요 <span class="cl">(<a href="https://docs.databricks.com/aws/en/uc-semantics/">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/databricks/uc-semantics/">Azure</a>)</span></li>
@@ -850,6 +902,7 @@ asyncio.run(main())</pre></div>
         <div class="grp"><h4>용어</h4>
           <dl class="glossary">
             <dt>스니펫 (snippet)</dt><dd>Genie가 자산에서 뽑아 낸 비즈니스 지식의 단위. 지표 정의·권위 있는 원천·규칙 등</dd>
+            <dt>OntoRank</dt><dd>Genie Ontology가 지식의 권위를 따져 순위를 매기는 알고리즘. 공식 블로그에서 쓰는 이름</dd>
             <dt>메트릭 뷰 (metric view)</dt><dd>측정값과 차원을 YAML로 한 번 정의해 재사용하는 UC 객체. 그룹화는 조회 시점에 결정</dd>
             <dt>도메인 (domain)</dt><dd>자산을 사업 기준으로 묶는 계층. governed tag로 구성하고 Discover에서 탐색</dd>
             <dt>Pages</dt><dd>도메인별로 관리하는 공식 용어 정의 문서. 사람과 Genie One이 함께 참조</dd>
@@ -860,7 +913,7 @@ asyncio.run(main())</pre></div>
     </section>
 
     <footer>
-      <p>Databricks 공식 문서·릴리스 노트·공개 블로그를 바탕으로 정리한 한글 자료입니다(기준일 2026-11-20). 제품 이름과 상태는 원문을 따릅니다. 실습 결과는 작성 시점에 한 워크스페이스에서 실행한 것이라 환경에 따라 다를 수 있습니다.</p>
+      <p>Databricks 공식 문서·릴리스 노트·공개 블로그를 바탕으로 정리한 한글 자료입니다(기준일 2026-11-20. OntoRank, OntoBricks, 준비 중인 기능은 2026-11-25에 추가). OntoBricks 내용은 Databricks Labs 공개 리포를 따랐습니다. 제품 이름과 상태는 원문을 따릅니다. 실습 결과는 작성 시점에 한 워크스페이스에서 실행한 것이라 환경에 따라 다를 수 있습니다.</p>
       <p>Databricks, Genie, Unity Catalog는 Databricks, Inc.의 상표입니다.</p>
     </footer>
   </main>
